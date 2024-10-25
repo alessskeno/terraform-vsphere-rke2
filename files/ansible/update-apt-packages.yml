@@ -1,0 +1,25 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+  vars:
+    ansible_password: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+
+  tasks:
+    - name: Update apt repo and cache on all Debian/Ubuntu boxes
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all packages on servers
+      apt: upgrade=dist force_apt_get=yes
+
+    - name: Check if a reboot is needed on all servers
+      register: reboot_required_file
+      stat: path=/var/run/reboot-required get_md5=no
+
+    - name: Output reboot requirement if needed
+      debug:
+        msg: "Reboot is required on this server."
+      when: reboot_required_file.stat.exists
+...
+

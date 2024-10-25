@@ -1,0 +1,84 @@
+*.tfstate.backup
+*.tfstate.lock.info
+
+#*.tfvars no sensitive data in variables atm
+.idea/
+.terraform/
+
+# Local .terraform directories
+**/.terraform/*
+
+# Local lock file
+.terraform.lock.hcl
+
+# .ova files
+*.ova
+**/.ova
+
+# .tfstate files
+*.tfstate.*
+**/.tfstate.*
+
+files/ova/*.ova
+
+
+# Crash log files
+crash.log
+crash.*.log
+**/crash.log
+**/crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data, such as
+# password, private keys, and other secrets. These should not be part of version
+# control as they are data points which are potentially sensitive and subject
+# to change depending on the environment.
+*.tfvars.json
+**/*.tfvars.json
+
+# Ignore override files as they are usually used to override resources locally and so
+# are not checked in
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+# Include override files you do wish to add to version control using negated pattern
+# !example_override.tf
+
+# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
+# example: *tfplan*
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+**/.terraformrc
+**/terraform.rc
+
+# packer_cache
+**/packer_cache/*
+
+# Exclude all .pkrvars files, which are likely to contain sensitive data, such as
+# password, private keys, and other secrets. These should not be part of version
+# control as they are data points which are potentially sensitive and subject
+# to change depending on the environment.
+*.pkrvars.hcl
+*.pkrvars.json
+**/*.pkrvars.hcl
+**/*.pkrvars.json
+
+# General HCL values - consolidated
+values.hcl
+
+# Keys
+*.pub
+**/*.pub
+*.pem
+**/*.pem
+
+# Openvpn certificates
+*.ovpn
+**/*.ovpn

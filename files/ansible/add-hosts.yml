@@ -1,0 +1,100 @@
+---
+- hosts: all
+  become: true
+  gather_facts: false
+
+  vars:
+    ansible_password: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    master_endpoints_az1: "{{ lookup('env', 'MASTER_ENDPOINTS_AZ1').split(',') }}"
+    master_endpoints_az3: "{{ lookup('env', 'MASTER_ENDPOINTS_AZ3').split(',') }}"
+    worker_endpoints_az1: "{{ lookup('env', 'WORKER_ENDPOINTS_AZ1').split(',') }}"
+    worker_endpoints_az3: "{{ lookup('env', 'WORKER_ENDPOINTS_AZ3').split(',') }}"
+    domain: "{{ lookup('env', 'DOMAIN') }}"
+    domain_root_crt: "{{ lookup('env', 'DOMAIN_ROOT_CRT') }}"
+    env: "{{ lookup('env', 'ENV') }}"
+    harbor_domain: "{{ lookup('env', 'HARBOR_DOMAIN') }}"
+    ansible_python_interpreter: "/usr/bin/python3.10"
+
+
+  # "${var.env}-az1-master-node-${count.index + 1}"
+  tasks:
+    - name: Write Root CA certificate to the system
+      copy:
+        content: "{{ domain_root_crt | b64decode }}"
+        dest: /usr/local/share/ca-certificates/{{ domain }}-root.crt
+        mode: 0755
+      notify: update-ca-certificates
+
+    - name: Update the CA certificates store
+      command: update-ca-certificates
+
+    # Step 2: Ensure the RKE2 directory exists
+    - name: Create the RKE2 directory if it does not exist
+      file:
+        path: /etc/rancher/rke2
+        state: directory
+        mode: 0755
+
+    # Step 3: Update the /etc/hosts file
+    - name: Ensure rke2 az1 master endpoints are in /etc/hosts
+      loop: "{{ master_endpoints_az1 }}"
+      loop_control:
+        index_var: index
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^{{ item }} "
+        line: "{{ item }} {{ env }}-az1-master-node-{{ index + 1 }}"
+        state: present
+
+    - name: Ensure rke2 az3 master endpoints are in /etc/hosts
+      loop: "{{ master_endpoints_az3 }}"
+      loop_control:
+        index_var: index
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^{{ item }} "
+        line: "{{ item }} {{ env }}-az3-master-node-{{ index + 1 }}"
+        state: present
+
+    - name: Ensure rke2 az1 worker endpoints are in /etc/hosts
+      loop: "{{ worker_endpoints_az1 }}"
+      loop_control:
+        index_var: index
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^{{ item }} "
+        line: "{{ item }} {{ env }}-az1-worker-node-{{ index + 1 }}"
+        state: present
+
+    - name: Ensure rke2 az3 worker endpoints are in /etc/hosts
+      loop: "{{ worker_endpoints_az3 }}"
+      loop_control:
+        index_var: index
+      lineinfile:
+        path: /etc/hosts
+        regexp: "^{{ item }} "
+        line: "{{ item }} {{ env }}-az3-worker-node-{{ index + 1 }}"
+        state: present
+
+    # Step 4: Configure RKE2 registries.yaml
+    - name: Configure RKE2 registries.yaml
+      copy:
+        dest: /etc/rancher/rke2/registries.yaml
+        content: |
+          configs:
+            "{{ harbor_domain }}":
+              tls:
+                insecure_skip_verify: true
+        mode: 0644
+
+    - name: Delete known_hosts file locally
+      ansible.builtin.file:
+        path: "~/.ssh/known_hosts"
+        state: absent
+      delegate_to: localhost
+      become: false
+  handlers:
+    - name: update-ca-certificates
+      command: update-ca-certificates
+...

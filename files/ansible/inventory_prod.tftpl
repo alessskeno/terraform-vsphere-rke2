@@ -1,0 +1,13 @@
+[masters]
+%{ for i, ip in master_endpoints ~}
+${env}-master-${i+1} ansible_host=${ip} rke2_type=server ansible_user=${ansible_user}
+%{ endfor ~}
+
+[workers]
+%{ for i, ip in worker_endpoints ~}
+${env}-worker-${i+1} ansible_host=${ip} rke2_type=agent ansible_user=${ansible_user}
+%{ endfor ~}
+
+[k8s_cluster:children]
+masters
+workers

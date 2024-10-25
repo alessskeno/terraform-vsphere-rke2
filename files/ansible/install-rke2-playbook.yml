@@ -1,0 +1,42 @@
+---
+- name: Deploy RKE2 Cluster
+  hosts: all
+  become: true
+  roles:
+    - role: lablabs.rke2
+  vars:
+    rke2_type: server
+    rke2_ha_mode: "{{ lookup('env', 'RKE2_HA_ENABLED') }}"
+    rke2_ha_mode_keepalived: "{{ lookup('env', 'RKE2_KEEPALIVED_ENABLED') }}"
+    rke2_ha_mode_kubevip: "{{ lookup('env', 'RKE2_KUBEVIP_ENABLED') }}"
+    rke2_kubevip_ipvs_enable: true
+    rke2_kubevip_cloud_provider_enable: true
+    rke2_loadbalancer_ip_range:
+      range-global: "{{ lookup('env', 'KUBEVIP_RANGE_GLOBAL') }}"
+      cidr-kube-system: "{{ lookup('env', 'KUBEVIP_ALB_CIDR') }}"
+    rke2_api_ip: "{{ lookup('env', 'RKE2_API_ENDPOINT') }}"
+    rke2_token: "{{ lookup('env', 'RKE2_TOKEN') }}"
+    rke2_architecture: amd64
+    rke2_download_kubeconf: "{{ lookup('env', 'RKE2_BOOTSTRAP_KUBECONF') | default('false') }}"
+    rke2_download_kubeconf_path: "{{ lookup('env', 'RKE2_BOOTSTRAP_KUBECONF_PATH') }}"
+    rke2_download_kubeconf_file_name: rke2.yaml
+    rke2_disable_cloud_controller: true
+    rke2_cloud_provider_name: "external"
+    rke2_additional_sans: "{{ lookup('env', 'RKE2_ADDITIONAL_SANS') | split(',') }}"
+    rke2_custom_registry_path: /etc/rancher/rke2/registries.yaml
+    rke2_cni: "{{ lookup('env', 'RKE2_CNI') }}"
+    rke2_kube_apiserver_args:
+      - '--enable-admission-plugins="DefaultTolerationSeconds"'
+      - '--default-not-ready-toleration-seconds=10'
+      - '--default-unreachable-toleration-seconds=10'
+    rke2_kube_controller_manager_arg:
+      - '--node-monitor-period=2s'
+      - '--node-monitor-grace-period=16s'
+    rke2_cluster_cidr:
+      - "{{ lookup('env', 'RKE2_CLUSTER_CIDR') }}"
+    rke2_service_cidr:
+      - "{{ lookup('env', 'RKE2_SERVICE_CIDR') }}"
+    rke2_drain_node_during_upgrade: true
+    ANSIBLE_HOST_KEY_CHECKING: False
+    ANSIBLE_REMOTE_USER: "{{ lookup('env', 'ANSIBLE_REMOTE_USER') }}"
+    ANSIBLE_PASSWORD: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"

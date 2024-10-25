@@ -1,0 +1,64 @@
+#######   Deprecated   ######
+
+#---
+#- hosts: all
+#  become: true
+#  gather_facts: false
+#  vars:
+#    ansible_password: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"
+#    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+#
+#  tasks:
+#    - name: Wait for SSH connection
+#      become: false
+#      ansible.builtin.wait_for:
+#        port: 22
+#        host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+#        search_regex: OpenSSH
+#        sleep: 10
+#        timeout: 300
+#      connection: local
+#
+#    - name: Grace period pause
+#      ansible.builtin.pause:
+#        seconds: 90
+#      delegate_to: localhost
+#
+#    - name: Trigger udev to recognize the changes
+#      command: udevadm trigger
+#
+#    - name: Find the partition symlink by label
+#      command: find /dev/disk/by-label -name '{{ lookup('env','STORAGE_FS_LABEL') }}'
+#      register: partition_symlink
+#
+#    - name: Get partition path from the symlink
+#      command: readlink -f "{{ partition_symlink.stdout }}"
+#      register: partition_path
+#
+#    - name: Get device path from the partition
+#      command: lsblk -no PKNAME "{{ partition_path.stdout }}"
+#      register: device_path
+#
+#    - name: Debug device_path
+#      debug:
+#        msg: "Device path: /dev/{{ device_path.stdout }}"
+#
+#    - name: Extend the primary partition to fill the disk
+#      command: growpart "/dev/{{ device_path.stdout }}" 1
+#      register: growpart_result
+#      changed_when: '"NOCHANGE" not in growpart_result.stdout'
+#      failed_when: false
+#
+#    - name: Extend ext4 filesystem
+#      ansible.builtin.filesystem:
+#        fstype: ext4
+#        dev: "{{ partition_path.stdout }}"
+#        resizefs: yes
+#
+#    - name: Delete known_hosts file locally
+#      ansible.builtin.file:
+#        path: "~/.ssh/known_hosts"
+#        state: absent
+#      delegate_to: localhost
+#      become: false
+#...
