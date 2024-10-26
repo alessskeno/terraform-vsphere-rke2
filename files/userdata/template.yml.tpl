@@ -52,10 +52,11 @@ write_files:
       #!/bin/bash
       swapoff --all
       sed -ri '/\sswap\s/s/^#?/#/' /etc/fstab
+      sudo apt remove unattended-upgrades
       sudo apt update
       sudo apt upgrade -y
       sudo apt install vim nfs-common -y
-      sudo apt remove unattended-upgrades
+
 
 bootcmd:
   - printf "[Resolve]\nDNS=8.8.8.8 8.8.4.4" > /etc/systemd/resolved.conf

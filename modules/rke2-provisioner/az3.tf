@@ -35,7 +35,7 @@ resource "vsphere_virtual_machine" "master_nodes_az3" {
         time_zone = "Asia/Baku"
       }
       network_interface {
-        ipv4_address = var.master_ip_range_az3[0]
+        ipv4_address = var.master_ip_range_az3[count.index]
         ipv4_netmask = 24
       }
 
@@ -61,7 +61,7 @@ resource "vsphere_virtual_machine" "master_nodes_az3" {
 }
 
 resource "vsphere_virtual_machine" "worker_nodes_az3" {
-  depends_on = [vsphere_virtual_machine.master_nodes_az3[0]]
+  depends_on = [vsphere_virtual_machine.master_nodes_az1[0]]
   count                = var.multi_az ? var.worker_node_count : 0
   name                 = "${var.env}-az3-worker-node-${count.index + 1}"
   datastore_id         = data.vsphere_datastore.vsphere_datastore_az3[0].id

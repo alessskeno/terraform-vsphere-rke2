@@ -12,6 +12,7 @@ output "production_outputs" {
     alertmanager_domain = local.alertmanager_domain
     kiali_domain        = local.kiali_domain
     rabbitmq_domain     = local.rabbitmq_domain
+    sonarqube_domain    = local.sonarqube_domain
     master_node_names = {
       az1 = vsphere_virtual_machine.master_nodes_az1[*].name
       az3 = var.multi_az ? vsphere_virtual_machine.master_nodes_az3[*].name : []
@@ -40,6 +41,7 @@ output "development_outputs" {
     loki_domain         = local.loki_domain
     alertmanager_domain = local.alertmanager_domain
     kiali_domain        = local.kiali_domain
+    sonarqube_domain    = local.sonarqube_domain
     rabbitmq_domain     = local.rabbitmq_domain
     master_node_names = {
       az1 = vsphere_virtual_machine.master_nodes_az1[*].name
@@ -70,6 +72,7 @@ output "staging_outputs" {
     kiali_domain        = local.kiali_domain
     loki_domain         = local.loki_domain
     rabbitmq_domain     = local.rabbitmq_domain
+    sonarqube_domain    = local.sonarqube_domain
     master_node_names = {
       az1 = vsphere_virtual_machine.master_nodes_az1[*].name
       az3 = var.multi_az ? vsphere_virtual_machine.master_nodes_az3[*].name : []

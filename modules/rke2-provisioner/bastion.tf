@@ -55,7 +55,7 @@ resource "vsphere_virtual_machine" "bastion_node" {
       domain          = var.domain
       env             = var.env
       hashed_pass     = var.hashed_pass
-      rke2_download_kubeconf_path = "../${path.root}/files/kubeconfig/"
+      rke2_download_kubeconf_path = "${path.root}/kubeconfig/"
     }))
     "guestinfo.userdata.encoding" = "base64"
   }

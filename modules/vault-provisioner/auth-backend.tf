@@ -19,7 +19,7 @@ resource "vault_kubernetes_auth_backend_config" "kubernetes_auth" {
 }
 
 resource "vault_mount" "kvv2_secret" {
-  path = vault_auth_backend.kubernetes_auth.path
+  path = vault_auth_backend.kubernetes_auth[var.env].path
   type = "kv-v2"
   options = {
     version = "2"

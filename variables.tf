@@ -142,15 +142,15 @@ variable "multi_az_prod" {
 
 # Production vars
 variable "storage_node_count_prod" {
-  default = 1
+  default = 0
 }
 
 variable "worker_node_count_prod" {
-  default = 2
+  default = 1
 }
 
 variable "master_node_count_prod" {
-  default = 1
+  default = 2
 }
 
 # Staging vars
@@ -241,10 +241,10 @@ variable "vm_dns" {
 #   sensitive = true
 # }
 #
-# variable "cluster_ca_cert_prod" {
-#   type      = string
-#   sensitive = true
-# }
+variable "cluster_ca_cert_prod" {
+  type      = string
+  sensitive = true
+}
 
 variable "gitlab_gitops_group_token" {
   type      = string

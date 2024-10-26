@@ -1,11 +1,17 @@
 [masters]
-%{ for i, ip in master_endpoints ~}
-${env}-master-${i+1} ansible_host=${ip} rke2_type=server ansible_user=${ansible_user}
+%{ for i, ip in master_endpoints_az1 ~}
+${env}-az1-master-node-${i+1} ansible_host=${ip} rke2_type=server ansible_ssh_user=${ansible_user}
+%{ endfor ~}
+%{ for i, ip in master_endpoints_az3 ~}
+${env}-az3-master-node-${i+1} ansible_host=${ip} rke2_type=server ansible_ssh_user=${ansible_user}
 %{ endfor ~}
 
 [workers]
-%{ for i, ip in worker_endpoints ~}
-${env}-worker-${i+1} ansible_host=${ip} rke2_type=agent ansible_user=${ansible_user}
+%{ for i, ip in worker_endpoints_az1 ~}
+${env}-az1-worker-node-${i+1} ansible_host=${ip} rke2_type=agent ansible_ssh_user=${ansible_user}
+%{ endfor ~}
+%{ for i, ip in worker_endpoints_az3 ~}
+${env}-az3-worker-node-${i+1} ansible_host=${ip} rke2_type=agent ansible_ssh_user=${ansible_user}
 %{ endfor ~}
 
 [k8s_cluster:children]

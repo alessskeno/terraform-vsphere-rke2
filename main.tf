@@ -1,153 +1,153 @@
 # Pre-requisites: python3.x, ansible, ansible-core, sshpass, whois(mkpasswd)
 
 # Production Cluster
-# module "vault_provisioner" {
-#   depends_on = [module.k8s_provisioner_prod]
-#   count      = module.k8s_provisioner_prod.vault_provisioner ? 1 : 0
-#   source     = "./modules/vault-provisioner"
-#   env        = "prod"
-#   namespaces = local.namespaces
-#   projects   = local.projects
-#   vault_authorized_environments = {
-#     dev = {
-#       host                   = cidrhost(var.vm_cidr_az1, 210)
-#       reviewer_token         = module.k8s_provisioner_dev.vault_token_reviewer_bearer_token
-#       cluster_ca_certificate = base64decode(var.cluster_ca_cert_dev)
-#     },
-#     #     stage = {
-#     #       host           = cidrhost(var.vm_cidr_az1, 110)
-#     #       reviewer_token = module.k8s_provisioner_stage.vault_token_reviewer_bearer_token
-#     #       cluster_ca_certificate = base64decode(var.cluster_ca_cert_stage)
-#     #     },
-#     prod = {
-#       host                   = cidrhost(var.vm_cidr_az1, 10)
-#       reviewer_token         = module.k8s_provisioner_prod.vault_token_reviewer_bearer_token
-#       cluster_ca_certificate = base64decode(var.cluster_ca_cert_prod)
-#     }
-#   }
-# }
+module "vault_provisioner" {
+  depends_on = [module.k8s_provisioner_prod]
+  count      = module.k8s_provisioner_prod.vault_provisioner ? 1 : 0
+  source     = "./modules/vault-provisioner"
+  env        = "prod"
+  namespaces = local.namespaces
+  projects   = local.projects
+  vault_authorized_environments = {
+    # dev = {
+    #   host                   = cidrhost(var.vm_cidr_az1, 210)
+    #   reviewer_token         = module.k8s_provisioner_dev.vault_token_reviewer_bearer_token
+    #   cluster_ca_certificate = base64decode(var.cluster_ca_cert_dev)
+    # },
+    #     stage = {
+    #       host           = cidrhost(var.vm_cidr_az1, 110)
+    #       reviewer_token = module.k8s_provisioner_stage.vault_token_reviewer_bearer_token
+    #       cluster_ca_certificate = base64decode(var.cluster_ca_cert_stage)
+    #     },
+    prod = {
+      host                   = cidrhost(var.vm_cidr_az1, 10)
+      reviewer_token         = module.k8s_provisioner_prod.vault_token_reviewer_bearer_token
+      cluster_ca_certificate = base64decode(var.cluster_ca_cert_prod)
+    }
+  }
+}
 
-# module "argocd_provisioner" {
-#   source = "./modules/argocd-provisioner"
-#   depends_on = [module.k8s_provisioner_prod]
-#   remote_argocd_environments = {
-#     dev = {
-#       host                   = cidrhost(var.vm_cidr_az1, 210)
-#       bearer_token           = module.k8s_provisioner_dev.argocd_external_account_bearer_token
-#       cluster_ca_certificate = base64decode(var.cluster_ca_cert_dev)
-#     }
-#     #     stage = {
-#     #       host         = cidrhost(var.vm_cidr_az1, 110)
-#     #       bearer_token = module.k8s_provisioner_stage.argocd_external_account_bearer_token
-#     #       cluster_ca_certificate = base64decode(var.cluster_ca_cert_stage)
-#     #     }
-#   }
-#
-#   providers = {
-#     argocd = argocd.prod
-#   }
-# }
+module "argocd_provisioner" {
+  source = "./modules/argocd-provisioner"
+  # depends_on = [module.k8s_provisioner_prod]
+  remote_argocd_environments = {
+    # dev = {
+    #   host                   = cidrhost(var.vm_cidr_az1, 210)
+    #   bearer_token           = module.k8s_provisioner_dev.argocd_external_account_bearer_token
+    #   cluster_ca_certificate = base64decode(var.cluster_ca_cert_dev)
+    # }
+    #     stage = {
+    #       host         = cidrhost(var.vm_cidr_az1, 110)
+    #       bearer_token = module.k8s_provisioner_stage.argocd_external_account_bearer_token
+    #       cluster_ca_certificate = base64decode(var.cluster_ca_cert_stage)
+    #     }
+  }
 
-# module "k8s_provisioner_prod" {
-#   depends_on = [module.rke2_prod_cluster]
-#   source = "./modules/k8s-provisioner"
-#   domain = var.domain
-#   env    = "prod"
-#
-#   vcloud_project_outputs = module.rke2_prod_cluster.production_outputs
-#
-#   gitlab_gitops_group_token = var.gitlab_gitops_group_token
-#   gitlab_runner_token       = var.gitlab_runner_token
-#   general_password          = var.general_password
-#   general_user              = var.general_user
-#   basic_auth_pass           = var.basic_auth_pass
-#
-#   slack_channel_name         = var.slack_channel_name
-#   slack_webhook_url          = var.slack_webhook_url
-#   slack_network_channel_name = var.slack_network_channel_name
-#   slack_network_webhook_url  = var.slack_network_webhook_url
-#
-#   vault_crt      = var.vault_crt
-#   vault_key      = var.vault_key
-#   vault_root_crt = var.vault_root_crt
-#
-#   domain_root_crt = var.domain_root_crt
-#   domain_crt      = var.domain_crt
-#   domain_key      = var.domain_key
-#
-#
-#
-#   external_secrets_version = "0.10.4"
-#   gitlab_runner_version    = "0.69.0"
-#   grafana_version          = "8.5.2"
-#   harbor_version           = "1.15.1"
-#   istio_version            = "1.23.2"
-#   loki_version             = "6.16.0"
-#   longhorn_version         = "1.7.1"
-#   minio_version            = "14.7.15"
-#   nfs_provisioner_version  = "4.0.18"
-#   prometheus_version       = "25.27.0"
-#   promtail_version         = "6.16.6"
-#   rabbitmq_version         = "15.0.2"
-#   redis_version            = "20.2.0"
-#   vault_version            = "0.28.1"
-#   kiali_version            = "1.89.0"
-#   sonarqube_version        = "10.7.0+3598"
-#   argocd_version           = "2.0.2"
-#   cert_manager_version     = "1.16.1"
-#
-#   external_secrets_enabled     = true
-#   gitlab_runner_enabled        = true
-#   grafana_enabled              = true
-#   harbor_enabled               = true
-#   istio_enabled                = true
-#   loki_enabled                 = true
-#   longhorn_enabled             = true
-#   minio_enabled                = true
-#   nfs_provisioner_enabled      = true
-#   prometheus_enabled           = true
-#   promtail_enabled             = true
-#   rabbitmq_enabled             = false
-#   redis_enabled                = false
-#   vault_enabled                = true
-#   kiali_enabled                = true
-#   sonarqube_enabled            = true
-#   argocd_enabled               = true
-#   cert_manager_enabled         = true
-#   vault_token_reviewer_enabled = true
-#   external_argocd_enabled      = true
-#
-#   providers = {
-#     harbor     = harbor.prod
-#     helm       = helm.prod
-#     kubernetes = kubernetes.prod
-#     kubectl    = kubectl.prod
-#   }
-#
-#   internal_dns_entries = {
-#     "harbor.${var.domain}"     = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "argocd.${var.domain}"     = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "vault.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "sonar.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "grafana.${var.domain}"    = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "kiali.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "prometheus.${var.domain}" = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "loki.${var.domain}"       = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "minio.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "rabbitmq.${var.domain}"   = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "redis.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "istio.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#   }
-#
-#   external_dns_entries = {
-#     "vcsa.hostart.local" = "10.100.70.250"
-#   }
-#
-#   projects   = local.projects
-#   namespaces = local.namespaces
-#
-#   managed_argocd_environments = module.argocd_provisioner.remote_argocd_environments
-# }
+  providers = {
+    argocd = argocd.prod
+  }
+}
+
+module "k8s_provisioner_prod" {
+  depends_on = [module.rke2_prod_cluster]
+  source = "./modules/k8s-provisioner"
+  domain = var.domain
+  env    = "prod"
+
+  vcloud_project_outputs = module.rke2_prod_cluster.production_outputs
+
+  gitlab_gitops_group_token = var.gitlab_gitops_group_token
+  gitlab_runner_token       = var.gitlab_runner_token
+  general_password          = var.general_password
+  general_user              = var.general_user
+  basic_auth_pass           = var.basic_auth_pass
+
+  slack_channel_name         = var.slack_channel_name
+  slack_webhook_url          = var.slack_webhook_url
+  slack_network_channel_name = var.slack_network_channel_name
+  slack_network_webhook_url  = var.slack_network_webhook_url
+
+  vault_crt      = var.vault_crt
+  vault_key      = var.vault_key
+  vault_root_crt = var.vault_root_crt
+
+  domain_root_crt = var.domain_root_crt
+  domain_crt      = var.domain_crt
+  domain_key      = var.domain_key
+
+
+
+  external_secrets_version = "0.10.4"
+  gitlab_runner_version    = "0.69.0"
+  grafana_version          = "8.5.2"
+  harbor_version           = "1.15.1"
+  istio_version            = "1.23.2"
+  loki_version             = "6.16.0"
+  longhorn_version         = "1.7.1"
+  minio_version            = "14.7.15"
+  nfs_provisioner_version  = "4.0.18"
+  prometheus_version       = "25.27.0"
+  promtail_version         = "6.16.6"
+  rabbitmq_version         = "15.0.2"
+  redis_version            = "20.2.0"
+  vault_version            = "0.28.1"
+  kiali_version            = "1.89.0"
+  sonarqube_version        = "10.7.0+3598"
+  argocd_version           = "2.0.2"
+  cert_manager_version     = "1.16.1"
+
+  external_secrets_enabled     = false
+  gitlab_runner_enabled        = false
+  grafana_enabled              = false
+  harbor_enabled               = false
+  istio_enabled                = false
+  loki_enabled                 = false
+  longhorn_enabled             = false
+  minio_enabled                = false
+  nfs_provisioner_enabled      = false
+  prometheus_enabled           = false
+  promtail_enabled             = false
+  rabbitmq_enabled             = false
+  redis_enabled                = false
+  vault_enabled                = false
+  kiali_enabled                = false
+  sonarqube_enabled            = false
+  argocd_enabled               = false
+  cert_manager_enabled         = false
+  vault_token_reviewer_enabled = false
+  external_argocd_enabled      = false
+
+  providers = {
+    harbor     = harbor.prod
+    helm       = helm.prod
+    kubernetes = kubernetes.prod
+    kubectl    = kubectl.prod
+  }
+
+  internal_dns_entries = {
+    "harbor.${var.domain}"     = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "argocd.${var.domain}"     = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "vault.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "sonar.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "grafana.${var.domain}"    = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "kiali.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "prometheus.${var.domain}" = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "loki.${var.domain}"       = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "minio.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "rabbitmq.${var.domain}"   = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "redis.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "istio.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+  }
+
+  external_dns_entries = {
+    "vcsa.hostart.local" = "10.100.70.250"
+  }
+
+  projects   = local.projects
+  namespaces = local.namespaces
+
+  managed_argocd_environments = module.argocd_provisioner.remote_argocd_environments
+}
 
 
 module "rke2_prod_cluster" {
@@ -156,7 +156,7 @@ module "rke2_prod_cluster" {
   domain       = var.domain
   multi_az     = true
   install_rke2 = true
-  lh_storage   = true
+  lh_storage   = false
   hashed_pass  = var.hashed_pass
   cluster_cidr = var.cluster_cidr
   service_cidr = var.service_cidr

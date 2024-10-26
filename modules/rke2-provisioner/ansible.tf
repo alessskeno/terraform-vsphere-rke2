@@ -7,7 +7,7 @@ resource "null_resource" "ansible_update_apt_packages" {
 
     environment = {
       ANSIBLE_HOST_KEY_CHECKING = "False"
-      ANSIBLE_REMOTE_USER       = var.ansible_user
+      ANSIBLE_USER              = var.ansible_user
       ANSIBLE_PASSWORD          = var.ansible_password
     }
   }
@@ -25,8 +25,10 @@ resource "local_file" "inventory_file" {
   filename = "${path.root}/files/ansible/inventory_${var.env}.ini"
   content = templatefile("${path.root}/files/ansible/inventory_${var.env}.tftpl", {
     env              = var.env,
-    master_endpoints = local.master_endpoints,
-    worker_endpoints = local.worker_endpoints
+    master_endpoints_az1 = local.master_endpoints_az1,
+    master_endpoints_az3 = local.master_endpoints_az3,
+    worker_endpoints_az1 = local.worker_endpoints_az1,
+    worker_endpoints_az3 = local.worker_endpoints_az3,
     ansible_user     = var.ansible_user
   })
 }
@@ -51,7 +53,7 @@ EOT
 
     environment = {
       ANSIBLE_HOST_KEY_CHECKING = "False"
-      ANSIBLE_REMOTE_USER       = var.ansible_user
+      ANSIBLE_USER              = var.ansible_user
       ANSIBLE_PASSWORD          = var.ansible_password
       MASTER_ENDPOINTS_AZ1 = join(",", local.master_endpoints)
       MASTER_ENDPOINTS_AZ3 = join(",", local.master_endpoints_az3)
@@ -82,21 +84,21 @@ ansible-playbook ${path.root}/files/ansible/install-rke2-playbook.yml -i ${local
 EOT
 
     environment = {
-      ANSIBLE_HOST_KEY_CHECKING    = "False"
-      ANSIBLE_REMOTE_USER          = var.ansible_user
-      ANSIBLE_PASSWORD             = var.ansible_password
-      RKE2_HA_ENABLED              = local.ha_enabled
-      RKE2_KEEPALIVED_ENABLED      = false
-      RKE2_KUBEVIP_ENABLED         = true
-      KUBEVIP_RANGE_GLOBAL         = var.kubevip_range_global
-      KUBEVIP_ALB_CIDR             = var.kubevip_alb_cidr
-      RKE2_API_ENDPOINT            = var.rke2_api_endpoint
-      RKE2_VERSION                 = var.rke2_version
-      RKE2_TOKEN                   = var.rke2_token
-      RKE2_CNI                     = var.rke2_cni
+      ANSIBLE_HOST_KEY_CHECKING = "False"
+      ANSIBLE_USER              = var.ansible_user
+      ANSIBLE_PASSWORD          = var.ansible_password
+      RKE2_HA_ENABLED           = local.ha_enabled
+      RKE2_KEEPALIVED_ENABLED   = false
+      RKE2_KUBEVIP_ENABLED      = true
+      KUBEVIP_RANGE_GLOBAL      = var.kubevip_range_global
+      KUBEVIP_ALB_CIDR          = var.kubevip_alb_cidr
+      RKE2_API_ENDPOINT         = var.rke2_api_endpoint
+      RKE2_VERSION              = var.rke2_version
+      RKE2_TOKEN                = var.rke2_token
+      RKE2_CNI                  = var.rke2_cni
       RKE2_ADDITIONAL_SANS = join(",", [for index in range(0, var.master_node_count) :"${var.env}-az1-master-node-${index + 1}"])
       RKE2_BOOTSTRAP_KUBECONF      = true
-      RKE2_BOOTSTRAP_KUBECONF_PATH = "${path.root}/files/kubeconfig"
+      RKE2_BOOTSTRAP_KUBECONF_PATH = "${path.root}/kubeconfig"
       RKE2_CLUSTER_CIDR            = var.cluster_cidr
       RKE2_SERVICE_CIDR            = var.service_cidr
     }
@@ -104,6 +106,6 @@ EOT
 
   triggers = {
     nodes = join(",", concat(local.master_endpoints, local.worker_endpoints))
-    playbook_changes = sha256("${path.root}/files/ansible/install-rke2-playbook.yml")
+    playbook_changes = sha256(file("${path.root}/files/ansible/install-rke2-playbook.yml"))
   }
 }

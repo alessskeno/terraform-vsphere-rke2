@@ -45,4 +45,5 @@ bootcmd:
 
 runcmd:
   - [ sh, -c, 'systemctl restart multipathd.service' ]
+  - [ sh, -c, 'sysctl -p' ]
   - [ sh, -c, 'systemctl enable --now iscsid.service' ]

@@ -44,4 +44,5 @@ runcmd:
   - [ sh, -c, 'systemctl restart multipathd.service' ]
   - [ sh, -c, 'sysctl -p' ]
   - [ sh, -c, 'systemctl enable --now iscsid.service' ]
+  - [ bash, -c, 'echo "export PATH=$PATH:/var/lib/rancher/rke2/bin/" >> ~/.bashrc' ]
   - [ bash, -c, 'echo alias k="kubectl" >> ~/.bashrc' ]

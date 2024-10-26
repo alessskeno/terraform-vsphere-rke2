@@ -5,7 +5,9 @@
   roles:
     - role: lablabs.rke2
   vars:
-    rke2_type: server
+    ansible_password: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    rke2_version: "{{ lookup('env', 'RKE2_VERSION') }}"
     rke2_ha_mode: "{{ lookup('env', 'RKE2_HA_ENABLED') }}"
     rke2_ha_mode_keepalived: "{{ lookup('env', 'RKE2_KEEPALIVED_ENABLED') }}"
     rke2_ha_mode_kubevip: "{{ lookup('env', 'RKE2_KUBEVIP_ENABLED') }}"
@@ -37,6 +39,3 @@
     rke2_service_cidr:
       - "{{ lookup('env', 'RKE2_SERVICE_CIDR') }}"
     rke2_drain_node_during_upgrade: true
-    ANSIBLE_HOST_KEY_CHECKING: False
-    ANSIBLE_REMOTE_USER: "{{ lookup('env', 'ANSIBLE_REMOTE_USER') }}"
-    ANSIBLE_PASSWORD: "{{ lookup('env', 'ANSIBLE_PASSWORD') }}"
