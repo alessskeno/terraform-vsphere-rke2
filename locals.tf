@@ -6,5 +6,5 @@ locals {
   vm_cidr_az3  = var.vm_cidr_az3
 
   multi_az = var.multi_az_prod
-  kubeconfig_file_path      = "${path.root}/files/ansible/kubeconfig/rke2.yaml"
+
 }

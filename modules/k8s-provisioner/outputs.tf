@@ -9,3 +9,7 @@ output "vault_token_reviewer_bearer_token" {
 output "vault_provisioner" {
   value = var.vault_provisioner
 }
+
+output "argocd_provisioner" {
+  value = var.argocd_provisioner
+}

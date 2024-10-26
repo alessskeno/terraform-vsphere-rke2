@@ -22,25 +22,25 @@ data:
             lameduck 5s
         }
         ready
-  %{ for dns, kube_endpoint in internal_dns_entries ~}
-  rewrite name ${dns}  ${kube_endpoint}
-  %{ endfor ~}
-  kubernetes cluster.local in-addr.arpa ip6.arpa {
-  pods insecure
-  fallthrough in-addr.arpa ip6.arpa
-  ttl 30
-  }
-  prometheus :9153
-  forward . /etc/resolv.conf
-  cache 30
-  loop
-  reload
-  loadbalance
+%{ for dns, kube_endpoint in internal_dns_entries ~}
+        rewrite name ${dns}  ${kube_endpoint}
+%{ endfor ~}
+        kubernetes cluster.local in-addr.arpa ip6.arpa {
+        pods insecure
+        fallthrough in-addr.arpa ip6.arpa
+        ttl 30
+        }
+        prometheus :9153
+        forward . /etc/resolv.conf
+        cache 30
+        loop
+        reload
+        loadbalance
 
-  hosts {
-  %{ for dns, endpoint in external_dns_entries ~}
-  ${endpoint} ${dns}
-  %{ endfor ~}
-  fallthrough
-  }
-  }
+        hosts {
+%{ for dns, endpoint in external_dns_entries ~}
+            ${endpoint} ${dns}
+%{ endfor ~}
+            fallthrough
+        }
+    }

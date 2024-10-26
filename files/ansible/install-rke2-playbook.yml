@@ -21,8 +21,8 @@
     rke2_architecture: amd64
     rke2_download_kubeconf: "{{ lookup('env', 'RKE2_BOOTSTRAP_KUBECONF') | default('false') }}"
     rke2_download_kubeconf_path: "{{ lookup('env', 'RKE2_BOOTSTRAP_KUBECONF_PATH') }}"
-    rke2_download_kubeconf_file_name: rke2.yaml
-    rke2_disable_cloud_controller: true
+    rke2_download_kubeconf_file_name: "{{ lookup('env', 'RKE2_BOOTSTRAP_KUBECONF_FILE_NAME') }}"
+    rke2_disable_cloud_controller: false
     rke2_cloud_provider_name: "external"
     rke2_additional_sans: "{{ lookup('env', 'RKE2_ADDITIONAL_SANS') | split(',') }}"
     rke2_custom_registry_path: /etc/rancher/rke2/registries.yaml

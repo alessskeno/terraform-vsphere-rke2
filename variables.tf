@@ -146,11 +146,11 @@ variable "storage_node_count_prod" {
 }
 
 variable "worker_node_count_prod" {
-  default = 1
+  default = 0
 }
 
 variable "master_node_count_prod" {
-  default = 2
+  default = 0
 }
 
 # Staging vars
@@ -231,16 +231,16 @@ variable "vm_dns" {
 #   sensitive = true
 # }
 #
-# variable "client_certificate_prod" {
-#   type      = string
-#   sensitive = true
-# }
-#
-# variable "client_key_prod" {
-#   type      = string
-#   sensitive = true
-# }
-#
+variable "client_certificate_prod" {
+  type      = string
+  sensitive = true
+}
+
+variable "client_key_prod" {
+  type      = string
+  sensitive = true
+}
+
 variable "cluster_ca_cert_prod" {
   type      = string
   sensitive = true
@@ -269,23 +269,23 @@ variable "basic_auth_pass" {
 #   default   = ""
 # }
 #
-# variable "client_certificate_stage" {
-#   type      = string
-#   sensitive = true
-#   default   = ""
-# }
-#
-# variable "client_key_stage" {
-#   type      = string
-#   sensitive = true
-#   default   = ""
-# }
-#
-# variable "cluster_ca_cert_stage" {
-#   type      = string
-#   sensitive = true
-#   default   = ""
-# }
+variable "client_certificate_stage" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
+variable "client_key_stage" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
+variable "cluster_ca_cert_stage" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
 
 # DEVELOPMENT AUTH VARS
 
@@ -295,23 +295,23 @@ variable "basic_auth_pass" {
 #   default   = ""
 # }
 #
-# variable "client_certificate_dev" {
-#   type      = string
-#   sensitive = true
-#   default   = ""
-# }
-#
-# variable "client_key_dev" {
-#   type      = string
-#   sensitive = true
-#   default   = ""
-# }
-#
-# variable "cluster_ca_cert_dev" {
-#   type      = string
-#   sensitive = true
-#   default   = ""
-# }
+variable "client_certificate_dev" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
+variable "client_key_dev" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
+variable "cluster_ca_cert_dev" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
 
 # SLACK CREDENTIALS
 variable "slack_channel_name" {

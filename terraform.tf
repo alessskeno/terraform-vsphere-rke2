@@ -21,18 +21,18 @@ terraform {
     }
 
     argocd = {
-      source  = "oboukili/argocd"
-      version = "~> 6.2"
+      source  = "argoproj-labs/argocd"
+      version = "~> 7.0"
     }
 
     harbor = {
-        source  = "goharbor/harbor"
-        version = "~>3.10"
+      source  = "goharbor/harbor"
+      version = "~>3.10"
     }
 
     vault = {
       source  = "hashicorp/vault"
-      version = "~>4.4"
+      version = "~> 4.4"
     }
   }
   required_version = ">= 1.9.0"
@@ -77,69 +77,87 @@ provider "argocd" {
 
 provider "helm" {
   kubernetes {
-    host        = "https://${cidrhost(var.vm_cidr_az1, 10)}:6443"
-    config_path = local.kubeconfig_file_path
+    host                   = "https://${cidrhost(var.vm_cidr_az1, 10)}:6443"
+    client_certificate     = base64decode(var.client_certificate_prod)
+    client_key             = base64decode(var.client_key_prod)
+    cluster_ca_certificate = base64decode(var.cluster_ca_cert_prod)
   }
   alias = "prod"
 }
 
 provider "kubernetes" {
-  host        = "https://${cidrhost(var.vm_cidr_az1, 10)}:6443"
-  config_path = local.kubeconfig_file_path
-  alias       = "prod"
+  host                   = "https://${cidrhost(var.vm_cidr_az1, 10)}:6443"
+  alias                  = "prod"
+  client_certificate     = base64decode(var.client_certificate_prod)
+  client_key             = base64decode(var.client_key_prod)
+  cluster_ca_certificate = base64decode(var.cluster_ca_cert_prod)
 }
 
 provider "kubectl" {
-  host              = "https://${cidrhost(var.vm_cidr_az1, 10)}:6443"
-  config_path       = "${path.root}/files/kubeconfig/rke2.yaml"
-  apply_retry_count = 5
-  load_config_file  = true
-  alias             = "prod"
+  host                   = "https://${cidrhost(var.vm_cidr_az1, 10)}:6443"
+  apply_retry_count      = 5
+  load_config_file       = false
+  alias                  = "prod"
+  client_certificate     = base64decode(var.client_certificate_prod)
+  client_key             = base64decode(var.client_key_prod)
+  cluster_ca_certificate = base64decode(var.cluster_ca_cert_prod)
 }
 
 # STAGING PROVIDERS
 provider "helm" {
   alias = "stage"
   kubernetes {
-    host        = "https://${cidrhost(var.vm_cidr_az1, 110)}:6443"
-    config_path = local.kubeconfig_file_path
+    host                   = "https://${cidrhost(var.vm_cidr_az1, 110)}:6443"
+    client_certificate     = base64decode(var.client_certificate_stage)
+    client_key             = base64decode(var.client_key_stage)
+    cluster_ca_certificate = base64decode(var.cluster_ca_cert_stage)
   }
 }
 
 provider "kubernetes" {
-  alias       = "stage"
-  host        = "https://${cidrhost(var.vm_cidr_az1, 110)}:6443"
-  config_path = local.kubeconfig_file_path
+  alias                  = "stage"
+  host                   = "https://${cidrhost(var.vm_cidr_az1, 110)}:6443"
+  client_certificate     = base64decode(var.client_certificate_stage)
+  client_key             = base64decode(var.client_key_stage)
+  cluster_ca_certificate = base64decode(var.cluster_ca_cert_stage)
 }
 
 provider "kubectl" {
-  alias             = "stage"
-  host              = "https://${cidrhost(var.vm_cidr_az1, 110)}:6443"
-  config_path       = "${path.root}/files/kubeconfig/rke2.yaml"
-  apply_retry_count = 5
-  load_config_file  = true
+  alias                  = "stage"
+  host                   = "https://${cidrhost(var.vm_cidr_az1, 110)}:6443"
+  client_certificate     = base64decode(var.client_certificate_stage)
+  client_key             = base64decode(var.client_key_stage)
+  cluster_ca_certificate = base64decode(var.cluster_ca_cert_stage)
+  apply_retry_count      = 5
+  load_config_file       = false
 }
 
 # DEVELOPMENT PROVIDERS
 provider "helm" {
   alias = "dev"
   kubernetes {
-    host        = "https://${cidrhost(var.vm_cidr_az1, 210)}:6443"
-    config_path = local.kubeconfig_file_path
+    host                   = "https://${cidrhost(var.vm_cidr_az1, 210)}:6443"
+    client_certificate     = base64decode(var.client_certificate_dev)
+    client_key             = base64decode(var.client_key_dev)
+    cluster_ca_certificate = base64decode(var.cluster_ca_cert_dev)
   }
 }
 
 provider "kubernetes" {
-  alias       = "dev"
-  host        = "https://${cidrhost(var.vm_cidr_az1, 210)}:6443"
-  config_path = local.kubeconfig_file_path
+  alias                  = "dev"
+  host                   = "https://${cidrhost(var.vm_cidr_az1, 210)}:6443"
+  client_certificate     = base64decode(var.client_certificate_dev)
+  client_key             = base64decode(var.client_key_dev)
+  cluster_ca_certificate = base64decode(var.cluster_ca_cert_dev)
 }
 
 provider "kubectl" {
-  alias             = "dev"
-  host              = "https://${cidrhost(var.vm_cidr_az1, 210)}:6443"
-  config_path       = "${path.root}/files/kubeconfig/rke2.yaml"
-  apply_retry_count = 5
-  load_config_file  = true
+  alias                  = "dev"
+  host                   = "https://${cidrhost(var.vm_cidr_az1, 210)}:6443"
+  client_certificate     = base64decode(var.client_certificate_dev)
+  client_key             = base64decode(var.client_key_dev)
+  cluster_ca_certificate = base64decode(var.cluster_ca_cert_dev)
+  apply_retry_count      = 5
+  load_config_file       = false
 }
 
