@@ -1,6 +1,6 @@
 resource "vsphere_virtual_machine" "bastion_node" {
   depends_on = [vsphere_virtual_machine.template[0]]
-  count                = 0
+  count                = 1
   name                 = "${var.env}-bastion-${count.index + 1}"
   datastore_id         = data.vsphere_datastore.vsphere_datastore_az1.id
   host_system_id       = data.vsphere_host.vsphere_host_az1.id

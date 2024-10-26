@@ -43,7 +43,7 @@ write_files:
             dhcp4: no
             dhcp6: no
             addresses:
-              - 10.100.105.99/24
+              - 10.100.104.99/24
             gateway4: ${vm_gw_ip_az1}
 
   - path: /root/template-ready.sh
@@ -52,7 +52,7 @@ write_files:
       #!/bin/bash
       swapoff --all
       sed -ri '/\sswap\s/s/^#?/#/' /etc/fstab
-      sudo apt remove unattended-upgrades
+      sudo apt remove unattended-upgrades -y
       sudo apt update
       sudo apt upgrade -y
       sudo apt install vim nfs-common -y

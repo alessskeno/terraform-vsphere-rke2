@@ -156,7 +156,7 @@ module "rke2_prod_cluster" {
   env          = "prod"
   domain       = var.domain
   multi_az     = true
-  install_rke2 = true
+  install_rke2 = false
   lh_storage   = false
   hashed_pass  = var.hashed_pass
   cluster_cidr = var.cluster_cidr
@@ -184,7 +184,7 @@ module "rke2_prod_cluster" {
   master_node_memory    = 4096
   master_node_disk_size = 50
 
-  storage_node_disk_size = 50
+  storage_node_disk_size = 100
 
   nfs_node_disk_size = 50
 
