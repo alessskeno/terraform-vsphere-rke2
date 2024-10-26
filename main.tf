@@ -177,7 +177,7 @@ module "rke2_prod_cluster" {
 
   # Resources
   worker_node_cpus      = 4
-  worker_node_memory    = 4096
+  worker_node_memory    = 8192
   worker_node_disk_size = 100
 
   master_node_cpus      = 4
@@ -189,8 +189,8 @@ module "rke2_prod_cluster" {
   nfs_node_disk_size = 50
 
   # AZ1
-  master_ip_range_az1       = [for i in range(11, 19) : cidrhost(local.vm_cidr_az1, i)]
-  worker_ip_range_az1       = [for i in range(21, 29) : cidrhost(local.vm_cidr_az1, i)]
+  master_ip_range_az1       = [for i in range(61, 69) : cidrhost(local.vm_cidr_az1, i)]
+  worker_ip_range_az1       = [for i in range(71, 79) : cidrhost(local.vm_cidr_az1, i)]
   kubevip_range_global = join("-", [cidrhost(var.vm_cidr_az1, 50)], [cidrhost(var.vm_cidr_az1, 60)])
   kubevip_alb_cidr          = "${cidrhost(var.vm_cidr_az1, 20)}/32"
   rke2_api_endpoint = cidrhost(var.vm_cidr_az1, 10)
@@ -203,8 +203,8 @@ module "rke2_prod_cluster" {
   nfs_ip_az1 = cidrhost(local.vm_cidr_az1, 70)
 
   # AZ3
-  master_ip_range_az3       = [for i in range(31, 39) : cidrhost(local.vm_cidr_az3, i)]
-  worker_ip_range_az3       = [for i in range(41, 49) : cidrhost(local.vm_cidr_az3, i)]
+  master_ip_range_az3       = [for i in range(81, 89) : cidrhost(local.vm_cidr_az3, i)]
+  worker_ip_range_az3       = [for i in range(91, 99) : cidrhost(local.vm_cidr_az3, i)]
   vsphere_datacenter_az3    = var.vsphere_datacenter_az3
   vsphere_host_az3          = var.vsphere_host_az3
   vsphere_resource_pool_az3 = var.vsphere_resource_pool_az3

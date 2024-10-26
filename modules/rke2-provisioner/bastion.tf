@@ -1,6 +1,6 @@
 resource "vsphere_virtual_machine" "bastion_node" {
   depends_on = [vsphere_virtual_machine.template[0]]
-  count                = 1
+  count                = 0
   name                 = "${var.env}-bastion-${count.index + 1}"
   datastore_id         = data.vsphere_datastore.vsphere_datastore_az1.id
   host_system_id       = data.vsphere_host.vsphere_host_az1.id
@@ -38,7 +38,7 @@ resource "vsphere_virtual_machine" "bastion_node" {
         time_zone = "Asia/Baku"
       }
       network_interface {
-        ipv4_address = "10.100.105.3"
+        ipv4_address = "10.100.104.3"
         ipv4_netmask = 24
       }
       ipv4_gateway = var.vm_gw_ip_az1
@@ -55,7 +55,7 @@ resource "vsphere_virtual_machine" "bastion_node" {
       domain          = var.domain
       env             = var.env
       hashed_pass     = var.hashed_pass
-      rke2_download_kubeconf_path = "${path.root}/kubeconfig/"
+      rke2_download_kubeconf_path = "${path.root}/files/ansible/kubeconfig"
     }))
     "guestinfo.userdata.encoding" = "base64"
   }
