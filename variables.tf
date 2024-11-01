@@ -142,15 +142,15 @@ variable "multi_az_prod" {
 
 # Production vars
 variable "storage_node_count_prod" {
-  default = 0
+  default = 1
 }
 
 variable "worker_node_count_prod" {
-  default = 0
+  default = 2
 }
 
 variable "master_node_count_prod" {
-  default = 0
+  default = 1
 }
 
 # Staging vars

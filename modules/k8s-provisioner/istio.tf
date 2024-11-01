@@ -218,10 +218,15 @@ resource "helm_release" "istiod" {
 
 locals {
   istiod_values = {
-    sidecarInjectorWebhook = {
-      rewriteAppHTTPProbe = false
-    }
+    profile = "ambient"
     pilot = {
+      env = {
+        "VERIFY_CERTIFICATE_AT_CLIENT"     = "true"
+        "ENABLE_AUTO_SNI"                  = "true"
+        "PILOT_ENABLE_HBONE"               = "true"
+        "CA_TRUSTED_NODE_ACCOUNTS"         = "istio-system/ztunnel,kube-system/ztunnel"
+        "PILOT_ENABLE_AMBIENT_CONTROLLERS" = "true"
+      }
       autoscaleMin = local.prod_env ? 2 : 1
       topologySpreadConstraints = [
         {
@@ -236,34 +241,48 @@ locals {
         }
       ]
     }
-    global = {
-      proxy = {
-        logLevel = "error" # |trace|debug|info|warning|error|critical|off|
-        resources = {
-          requests = {
-            cpu    = "100m"
-            memory = "128Mi"
-          }
-          limits = {
-            cpu    = "2"
-            memory = "1024Mi"
-          }
-        }
-      }
-    },
     meshConfig = {
       defaultConfig = {
         proxyMetadata = {
-          ISTIO_META_DNS_CAPTURE = "true"
+          ISTIO_META_DNS_CAPTURE  = "true"
+          ISTIO_META_ENABLE_HBONE = "true"
         }
       }
       accessLogFile         = "/dev/stdout"
-      accessLogEncoding     = "TEXT" # | JSON
+      accessLogEncoding = "TEXT" # | JSON
       accessLogFormat       = "[%START_TIME%] \"%REQ(:METHOD)%\" \"%REQ(USER-AGENT)%\" \"%REQ(:AUTHORITY)%\" \"%UPSTREAM_HOST%\" %RESPONSE_CODE% %RESPONSE_FLAGS% %BYTES_RECEIVED% %BYTES_SENT% %DURATION% %RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)% \"%REQ(X-FORWARDED-FOR)%\" \"%REQ(X-REQUEST-ID)%\" \"%REQ(:PATH)%\" \"%REQ(USER-AGENT)%\" \"%REQ(X-ENVOY-ORIGINAL-PATH)%\"\n"
       enablePrometheusMerge = var.prometheus_enabled
       outboundTrafficPolicy = {
         mode = "ALLOW_ANY" # | REGISTRY_ONLY
       }
+    }
+  }
+}
+
+# Istio CNI
+resource "helm_release" "istio_cni" {
+  count = var.istio_enabled ? 1 : 0
+
+  depends_on = [helm_release.istiod]
+
+  name       = "istio-cni"
+  repository = "https://istio-release.storage.googleapis.com/charts"
+  chart      = "cni"
+  namespace  = kubernetes_namespace.istio[0].metadata[0].name
+  version    = var.istio_version
+
+  values = [
+    yamlencode(local.istio_cni_values)
+  ]
+}
+
+locals {
+  istio_cni_values = {
+    profile = "ambient"
+    logLevel = "error" # |trace|debug|info|warning|error|critical|off|
+    privileged = true
+    ambient = {
+      enabled = true
     }
   }
 }
@@ -306,35 +325,31 @@ locals {
 
     service = {
       externalTrafficPolicy = "Local"
-      type                  = "NodePort"
+      type                  = "LoadBalancer"
       ports = [
         {
           name       = "status-port"
           protocol   = "TCP"
           port       = 15021
           targetPort = 15021
-          nodePort   = 30521
         },
         {
           name       = "redis-master"
           protocol   = "TCP"
           port       = 6379
           targetPort = 6379
-          nodePort   = 30379
         },
         {
           name       = "http2"
           protocol   = "TCP"
           port       = 80
           targetPort = 80
-          nodePort   = 30080
         },
         {
           name       = "https"
           protocol   = "TCP"
           port       = 443
           targetPort = 443
-          nodePort   = 30443
         }
       ]
     }
@@ -502,7 +517,7 @@ locals {
                       {
                         key      = "app"
                         operator = "In"
-                        values   = ["kiali"]
+                        values = ["kiali"]
                       }
                     ]
                   }
@@ -550,7 +565,7 @@ locals {
               ]
               tls = [
                 {
-                  hosts      = ["*.${var.domain}"]
+                  hosts = ["*.${var.domain}"]
                   secretName = "tls-domain"
                 }
               ]

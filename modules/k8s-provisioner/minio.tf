@@ -27,7 +27,7 @@ resource "helm_release" "minio" {
 
   set {
     name  = "persistence.storageClass"
-    value = "longhorn"
+    value = var.storage_class_name
   }
 
   set {

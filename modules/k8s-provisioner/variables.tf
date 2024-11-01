@@ -66,6 +66,10 @@ variable "harbor_robot_user" {
   default   = "robot$ci_user"
 }
 
+variable "storage_class_name" {
+  default = "longhorn"
+}
+
 variable "external_dns_entries" { default = {} }
 variable "internal_dns_entries" { default = {} }
 

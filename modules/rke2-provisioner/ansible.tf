@@ -98,7 +98,7 @@ EOT
       RKE2_CNI                  = var.rke2_cni
       RKE2_ADDITIONAL_SANS = join(",", [for index in range(0, var.master_node_count) :"${var.env}-az1-master-node-${index + 1}"])
       RKE2_BOOTSTRAP_KUBECONF      = true
-      RKE2_BOOTSTRAP_KUBECONF_PATH = "${path.root}/files/ansible/kubeconfig/"
+      RKE2_BOOTSTRAP_KUBECONF_PATH = "../${path.root}/kubeconfig/"
       RKE2_BOOTSTRAP_KUBECONF_FILE_NAME = "rke2.yaml"
       RKE2_CLUSTER_CIDR            = var.cluster_cidr
       RKE2_SERVICE_CIDR            = var.service_cidr

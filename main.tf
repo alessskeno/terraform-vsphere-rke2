@@ -49,106 +49,107 @@
 #   }
 # }
 
-# module "k8s_provisioner_prod" {
-#   depends_on = [module.rke2_prod_cluster]
-#   source = "./modules/k8s-provisioner"
-#   domain = var.domain
-#   env    = "prod"
-#
-#   vcloud_project_outputs = module.rke2_prod_cluster.production_outputs
-#
-#   gitlab_gitops_group_token = var.gitlab_gitops_group_token
-#   gitlab_runner_token       = var.gitlab_runner_token
-#   general_password          = var.general_password
-#   general_user              = var.general_user
-#   basic_auth_pass           = var.basic_auth_pass
-#
-#   slack_channel_name         = var.slack_channel_name
-#   slack_webhook_url          = var.slack_webhook_url
-#   slack_network_channel_name = var.slack_network_channel_name
-#   slack_network_webhook_url  = var.slack_network_webhook_url
-#
-#   vault_crt      = var.vault_crt
-#   vault_key      = var.vault_key
-#   vault_root_crt = var.vault_root_crt
-#
-#   domain_root_crt = var.domain_root_crt
-#   domain_crt      = var.domain_crt
-#   domain_key      = var.domain_key
-#
-#
-#
-#   external_secrets_version = "0.10.4"
-#   gitlab_runner_version    = "0.69.0"
-#   grafana_version          = "8.5.2"
-#   harbor_version           = "1.15.1"
-#   istio_version            = "1.23.2"
-#   loki_version             = "6.16.0"
-#   longhorn_version         = "1.7.1"
-#   minio_version            = "14.7.15"
-#   nfs_provisioner_version  = "4.0.18"
-#   prometheus_version       = "25.27.0"
-#   promtail_version         = "6.16.6"
-#   rabbitmq_version         = "15.0.2"
-#   redis_version            = "20.2.0"
-#   vault_version            = "0.28.1"
-#   kiali_version            = "1.89.0"
-#   sonarqube_version        = "10.7.0+3598"
-#   argocd_version           = "2.0.2"
-#   cert_manager_version     = "1.16.1"
-#
-#   external_secrets_enabled     = false
-#   gitlab_runner_enabled        = false
-#   grafana_enabled              = false
-#   harbor_enabled               = false
-#   istio_enabled                = false
-#   loki_enabled                 = false
-#   longhorn_enabled             = false
-#   minio_enabled                = false
-#   nfs_provisioner_enabled      = false
-#   prometheus_enabled           = false
-#   promtail_enabled             = false
-#   rabbitmq_enabled             = false
-#   redis_enabled                = false
-#   vault_enabled                = false
-#   kiali_enabled                = false
-#   sonarqube_enabled            = false
-#   argocd_enabled               = false
-#   cert_manager_enabled         = false
-#   vault_token_reviewer_enabled = false
-#   external_argocd_enabled      = false
-#
-#   providers = {
-#     harbor     = harbor.prod
-#     helm       = helm.prod
-#     kubernetes = kubernetes.prod
-#     kubectl    = kubectl.prod
-#   }
-#
-#   internal_dns_entries = {
-#     "harbor.${var.domain}"     = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "argocd.${var.domain}"     = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "vault.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "sonar.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "grafana.${var.domain}"    = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "kiali.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "prometheus.${var.domain}" = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "loki.${var.domain}"       = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "minio.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "rabbitmq.${var.domain}"   = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "redis.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#     "istio.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
-#   }
-#
-#   external_dns_entries = {
-#     "vcsa.hostart.local" = "10.100.70.250"
-#   }
-#
-#   projects   = local.projects
-#   namespaces = local.namespaces
-#
-#   # managed_argocd_environments = module.argocd_provisioner.remote_argocd_environments
-# }
+module "k8s_provisioner_prod" {
+  depends_on = [module.rke2_prod_cluster]
+  source = "./modules/k8s-provisioner"
+  domain = var.domain
+  env    = "prod"
+
+  vcloud_project_outputs = module.rke2_prod_cluster.production_outputs
+
+  gitlab_gitops_group_token = var.gitlab_gitops_group_token
+  gitlab_runner_token       = var.gitlab_runner_token
+  general_password          = var.general_password
+  general_user              = var.general_user
+  basic_auth_pass           = var.basic_auth_pass
+
+  slack_channel_name         = var.slack_channel_name
+  slack_webhook_url          = var.slack_webhook_url
+  slack_network_channel_name = var.slack_network_channel_name
+  slack_network_webhook_url  = var.slack_network_webhook_url
+
+  vault_crt      = var.vault_crt
+  vault_key      = var.vault_key
+  vault_root_crt = var.vault_root_crt
+
+  domain_root_crt = var.domain_root_crt
+  domain_crt      = var.domain_crt
+  domain_key      = var.domain_key
+
+
+
+  external_secrets_version = "0.10.4"
+  gitlab_runner_version    = "0.69.0"
+  grafana_version          = "8.5.2"
+  harbor_version           = "1.15.1"
+  istio_version            = "1.23.2"
+  loki_version             = "6.16.0"
+  longhorn_version         = "1.7.1"
+  minio_version            = "14.7.15"
+  nfs_provisioner_version  = "4.0.18"
+  prometheus_version       = "25.27.0"
+  promtail_version         = "6.16.6"
+  rabbitmq_version         = "15.0.2"
+  redis_version            = "20.2.0"
+  vault_version            = "0.28.1"
+  kiali_version            = "1.79.0"
+  sonarqube_version        = "10.7.0+3598"
+  argocd_version           = "2.0.2"
+  cert_manager_version     = "1.16.1"
+
+  external_secrets_enabled     = false
+  gitlab_runner_enabled        = false
+  grafana_enabled              = true
+  harbor_enabled               = false
+  istio_enabled                = true
+  loki_enabled                 = false
+  longhorn_enabled             = true
+  minio_enabled                = false
+  nfs_provisioner_enabled      = false
+  prometheus_enabled           = true
+  promtail_enabled             = false
+  rabbitmq_enabled             = false
+  redis_enabled                = false
+  vault_enabled                = false
+  kiali_enabled                = false
+  sonarqube_enabled            = false
+  argocd_enabled               = false
+  cert_manager_enabled         = false
+  vault_token_reviewer_enabled = false
+  external_argocd_enabled      = false
+
+  providers = {
+    harbor     = harbor.prod
+    helm       = helm.prod
+    kubernetes = kubernetes.prod
+    kubectl    = kubectl.prod
+  }
+
+  internal_dns_entries = {
+    "harbor.${var.domain}"     = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "argocd.${var.domain}"     = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "vault.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "sonar.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "grafana.${var.domain}"    = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "kiali.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "prometheus.${var.domain}" = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "loki.${var.domain}"       = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "minio.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "rabbitmq.${var.domain}"   = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "redis.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+    "istio.${var.domain}"      = "nginx-ingress-controller.kube-system.svc.cluster.local"
+  }
+
+  external_dns_entries = {
+    "vcsa.hostart.local" = "10.100.70.250"
+  }
+
+  projects   = local.projects
+  namespaces = local.namespaces
+  storage_class_name = "longhorn"
+
+  # managed_argocd_environments = module.argocd_provisioner.remote_argocd_environments
+}
 
 
 module "rke2_prod_cluster" {
@@ -156,8 +157,8 @@ module "rke2_prod_cluster" {
   env          = "prod"
   domain       = var.domain
   multi_az     = true
-  install_rke2 = false
-  lh_storage   = false
+  install_rke2 = true
+  lh_storage   = true
   hashed_pass  = var.hashed_pass
   cluster_cidr = var.cluster_cidr
   service_cidr = var.service_cidr
@@ -296,6 +297,7 @@ module "rke2_prod_cluster" {
 #
 #   projects   = local.projects
 #   namespaces = local.namespaces
+#   storage_class_name = "longhorn"
 #
 #   managed_argocd_environments = {}
 # }
@@ -436,6 +438,7 @@ module "rke2_prod_cluster" {
 #
 #   projects   = local.projects
 #   namespaces = local.namespaces
+#   storage_class_name = "longhorn"
 #
 #   managed_argocd_environments = {}
 # }

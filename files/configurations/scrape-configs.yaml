@@ -1,7 +1,8 @@
 - job_name: git-exporter
   static_configs:
     - targets:
-        - 10.0.211.2:9100
+        - ${bastion_ip}:9100
+        - 10.100.104.3:9100
 - job_name: blackbox
   scrape_interval: 30s
   metrics_path: /probe
@@ -9,8 +10,7 @@
     module: [http_2xx] # Look for a HTTP 200 response.
   static_configs:
     - targets:
-        #    - https://ui.cloud.sima.az:30443
-        - https://git.azintelecom.az
+        - https://gitlab.hostart.az
   relabel_configs:
     - source_labels: [__address__]
       target_label: __param_target

@@ -81,7 +81,7 @@ locals {
     }
     persistence = {
       enabled      = true
-      storageClass = "longhorn"
+      storageClass = var.storage_class_name
       size         = local.prod_env ? "8Gi" : "2Gi"
     }
     ingress = {

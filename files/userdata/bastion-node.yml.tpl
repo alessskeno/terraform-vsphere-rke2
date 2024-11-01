@@ -40,6 +40,18 @@ write_files:
       ${endpoint} ${env}-az3-worker-node-${index + 1}
 %{ endfor ~}
 
+  - path: /home/devops/install_node_exporter.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      wget https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz
+      tar -xvf node_exporter-1.8.2.linux-amd64.tar.gz
+      cd node_exporter-1.8.2.linux-amd64
+      sudo cp node_exporter /usr/local/bin
+      useradd --no-create-home --shell /bin/false node_exporter
+      chown node_exporter:node_exporter /usr/local/bin/node_exporter
+      systemctl enable  --now node_exporter
+
   - path: /home/devops/install_devops_tools.sh
     permissions: '0755'
     content: |
@@ -57,7 +69,7 @@ bootcmd:
   - [ systemctl, restart, systemd-resolved ]
 
 runcmd:
+  - [ sh, -c, '/home/devops/install_node_exporter.sh' ]
   - [ sh, -c, '/home/devops/install_devops_tools.sh' ]
   - [ bash, -c, 'echo "export KUBECONFIG=${rke2_download_kubeconf_path}/rke2.yaml" >> ~/.bashrc' ]
-  - [ bash, -c, 'echo "export PATH=$PATH:/var/lib/rancher/rke2/bin/" >> ~/.bashrc' ]
   - [ bash, -c, 'echo alias k="kubectl" >> ~/.bashrc' ]

@@ -130,7 +130,7 @@ locals {
     },
     "persistence" = {
       "enabled"      = true
-      "storageClass" = "longhorn"
+      "storageClass" = var.storage_class_name
       "size"         = "20Gi"
     }
   }

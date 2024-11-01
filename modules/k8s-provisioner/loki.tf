@@ -128,7 +128,7 @@ locals {
           {
             name         = "data"
             size         = "5Gi"
-            storageClass = "longhorn"
+            storageClass = var.storage_class_name
           }
         ]
       }

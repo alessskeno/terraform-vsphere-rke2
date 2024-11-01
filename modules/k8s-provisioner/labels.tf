@@ -9,6 +9,7 @@ resource "kubernetes_labels" "cp_node_labels" {
     "node-role.kubernetes.io/control-plane" = true,
     "node-role.kubernetes.io/etcd"          = true,
     "node-role.kubernetes.io/master"        = true,
+    "node.kubernetes.io/instance-type"      = "rke2"
     "topology.kubernetes.io/zone"           = each.value.availability_zone
   }, local.default_labels)
 }

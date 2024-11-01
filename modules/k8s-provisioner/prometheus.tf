@@ -57,7 +57,7 @@ resource "helm_release" "prometheus" {
 
   set {
     name  = "server.persistentVolume.storageClass"
-    value = "longhorn"
+    value = var.storage_class_name
   }
 
   set {
@@ -116,9 +116,13 @@ locals {
         ]
       }
     },
-    extraScrapeConfigs = var.env == "prod" ? file("${path.root}/files/configurations/scrape-configs.yaml") : ""
+    extraScrapeConfigs = var.env == "prod" ? templatefile("${path.root}/files/configurations/scrape-configs.yaml", {
+      bastion_ip = local.nfs_ip_az1
+    }) : ""
     serverFiles = {
-      "alerting_rules.yml" = yamldecode(file("${path.root}/files/configurations/alerting-rules.yaml"))
+      "alerting_rules.yml" = yamldecode(templatefile("${path.root}/files/configurations/alerting-rules.yaml", {
+        env = title(var.env)
+      }))
     },
     alertmanager = {
       enabled = true

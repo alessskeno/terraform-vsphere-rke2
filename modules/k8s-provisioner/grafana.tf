@@ -19,8 +19,8 @@ resource "helm_release" "grafana" {
   count = var.grafana_enabled ? 1 : 0
 
   depends_on = [
+    helm_release.longhorn,
     kubernetes_secret.grafana_domain_root_crt,
-    helm_release.prometheus,
     kubernetes_secret.grafana_domain_tls
   ]
 
@@ -80,17 +80,10 @@ resource "kubernetes_secret" "grafana_domain_tls" {
 locals {
   grafana_values = {
     affinity = local.az1_affinity_rule
-    "grafana.ini" = {
-      "auth.ldap" = {
-        enabled       = "true"
-        allow_sign_up = "true"
-        config_file   = "/etc/grafana/ldap.toml"
-      }
-    }
     persistence = {
       enabled          = true
       size             = "11Gi"
-      storageClassName = "longhorn"
+      storageClassName = var.storage_class_name
       accessModes = [
         "ReadWriteOncePod"
       ]
@@ -113,31 +106,31 @@ locals {
         apiVersion = 1
         providers = [
           {
-            name            = "metrics"
+            name            = "internal-systems"
             orgId           = 1
-            folder          = "Metrics"
+            folder          = "Internal Systems"
             type            = "file"
             disableDeletion = true
             editable        = true
             options = {
-              path = "/var/lib/grafana/dashboards/metrics" # delete from disk to remove provisioned dashboards
+              path = "/var/lib/grafana/dashboards/internal-systems"
             }
           },
           {
-            name            = "database-systems"
+            name            = "vmware-vsphere"
             orgId           = 1
-            folder          = "Database Systems"
+            folder          = "VMware-vSphere"
             type            = "file"
             disableDeletion = true
             editable        = true
             options = {
-              path = "/var/lib/grafana/dashboards/database-systems"
+              path = "/var/lib/grafana/dashboards/vmware-vsphere"
             }
           },
           {
             name            = "logs"
             orgId           = 1
-            folder          = "Logs"
+            folder          = "Kubernetes App Logs"
             type            = "file"
             disableDeletion = true
             editable        = true
@@ -146,115 +139,82 @@ locals {
             }
           },
           {
-            name            = "internal-systems"
+            name            = "network-devices"
             orgId           = 1
-            folder          = "Internal systems"
+            folder          = "Network Devices"
             type            = "file"
             disableDeletion = true
             editable        = true
             options = {
-              path = "/var/lib/grafana/dashboards/internal-systems"
+              path = "/var/lib/grafana/dashboards/network-devices"
             }
-          },
+          }
         ]
       }
     }
     dashboards = {
-      database-systems = {
-        "postgresql-database-prod" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/postgresql-database-prod-9628.json"
-          datasource = "prometheus-prod"
-        }
-        "postgresql-database-dev" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/postgresql-database-dev-9628.json"
-          datasource = "prometheus-dev"
-        }
-        "postgresql-database-stage" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/postgresql-database-stage-9628.json"
-          datasource = "prometheus-stage"
-        }
-        "mongodb-prod" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/mongodb-prod-12079.json"
-          datasource = "prometheus-prod"
-        }
-        "mongodb-dev" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/mongodb-dev-12079.json"
-          datasource = "prometheus-dev"
-        }
-        "mongodb-stage" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/mongodb-prod-12079.json"
-          datasource = "prometheus-stage"
-        }
-      }
       internal-systems = {
-        "blackbox_exporter" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/blackbox_exporter.json"
-          datasource = "prometheus-prod"
+        uptimekuma-exporter = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/uptimekuma-exporter.json"
+          datasource = "prometheus"
+        },
+        discord-exporter = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/discord-monitoring.json"
+          datasource = "prometheus"
+        },
+      },
+      vmware-vsphere = {
+        vmware-vsphere-cluster = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/vmware-cluster.json"
+          datasource = "prometheus"
+        },
+        vmware-vsphere-esx = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/vmware-esx-host-information.json"
+          datasource = "prometheus"
+        },
+        vmware-vsphere-esxi = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/vmware-esxi-import.json"
+          datasource = "prometheus"
+        },
+        vmware-vsphere-overview = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/vmware-overview.json"
+          datasource = "prometheus"
+        },
+        vmware-vsphere-vm = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/vmware-vm.json"
+          datasource = "prometheus"
         }
-
-        "rabbitmq-overview-prod" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/rabbitmq-overview-prod-10991.json"
-          datasource = "prometheus-prod"
-        }
-        "rabbitmq-overview-stage" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/rabbitmq-overview-stage-10991.json"
-          datasource = "prometheus-stage"
-        }
-        "rabbitmq-overview-dev" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/rabbitmq-overview-dev-10991.json"
-          datasource = "prometheus-dev"
-        }
-        "redis-overview-prod" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/redis-prod-763.json"
-          datasource = "prometheus-prod"
-        }
-        "redis-overview-stage" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/redis-stage-763.json"
-          datasource = "prometheus-stage"
-        }
-        "redis-overview-dev" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/redis-dev-763.json"
-          datasource = "prometheus-dev"
-        }
-      }
-      metrics = {
-        "kubernetes-views-namespaces" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/kubernetes-namespaces-15758.json"
-          datasource = "prometheus-${var.env}"
-        }
-        "kubernetes-persistent-volumes" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/kubernetes-persistent-volumes-13646.json"
-          datasource = "prometheus-${var.env}"
-        }
-        "kubernetes-node-monitoring" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/kubernetes-node-exporter-1860.json?ref_type=heads"
-          datasource = "prometheus-${var.env}"
-        }
-        "kubernetes-ingress-monitoring-v1-prod" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/kubernetes-ingress-prod-9614.json"
-          datasource = "prometheus-${var.env}"
-        }
-        "kubernetes-ingress-monitoring-v2" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/kubernetes-ingress-v2-prod-14314.json"
-          datasource = "prometheus-${var.env}"
-        }
-      }
+      },
       logs = {
-        "kubernetes-app-logs-prod" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/kubernetes-app-logs-prod-13639.json?ref_type=heads"
-          datasource = "loki-prod"
+        kubernetes-app-logs = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/kubernetes-app-logs.json"
+          datasource = "loki"
         }
-        "kubernetes-container-log-dashboard-prod" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/kubernetes-container-log-dashboard-16966-prod.json"
-          datasource = "loki-prod"
-        }
-        "kubernetes-app-logs-stage" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/kubernetes-app-logs-stage-13639.json?ref_type=heads"
-          datasource = "loki-stage"
-        }
-        "kubernetes-app-logs-dev" = {
-          url        = "https://git.azintelecom.az/grafana/dashboards/-/raw/main/logs/kubernetes-app-logs-dev-13639.json?ref_type=heads"
-          datasource = "loki-dev"
+      },
+      network-devices = {
+        pathnet = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/pathnet-monitoring.json"
+          datasource = "prometheus"
+        },
+        mikrotik-routeros = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/mikrotik-monitoring.json"
+          datasource = "prometheus"
+        },
+        fortigate-routeros = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/fortigate-monitoring.json"
+          datasource = "prometheus"
+        },
+        cisco-network-devices = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/snmp-stats.json"
+          datasource = "prometheus"
+        },
+        juniper-network-devices = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/juniper-monitoring.json"
+          datasource = "prometheus"
+        },
+        hpe-ilo-devices = {
+          url        = "https://gitlab.hostart.az/grafana/dashboards/-/raw/main/logs/snmp-ilo.json"
+          datasource = "prometheus"
         }
       }
     }
@@ -267,7 +227,7 @@ locals {
       tls = [
         {
           secretName = "tls-domain"
-          hosts      = ["*.${var.domain}"]
+          hosts = ["*.${var.domain}"]
         }
       ]
     },
@@ -284,7 +244,7 @@ locals {
           {
             name          = "prometheus-stage"
             type          = "prometheus"
-            url           = "https://prometheus-stage.azintelecom.az/"
+            url           = "https://prometheus-stage.${var.domain}/"
             basicAuth     = true
             basicAuthUser = var.general_user
             secureJsonData = {
@@ -294,7 +254,7 @@ locals {
           {
             name          = "prometheus-dev"
             type          = "prometheus"
-            url           = "https://prometheus-dev.azintelecom.az/"
+            url           = "https://prometheus-dev.${var.domain}/"
             basicAuth     = true
             basicAuthUser = var.general_user
             secureJsonData = {
@@ -309,12 +269,12 @@ locals {
           {
             name = "loki-stage"
             type = "loki"
-            url  = "https://loki-stage.azintelecom.az/"
+            url  = "https://loki-stage.${var.domain}/"
           },
           {
             name = "loki-dev"
             type = "loki"
-            url  = "https://loki-dev.azintelecom.az/"
+            url  = "https://loki-dev.${var.domain}/"
           }
         ]
       }
