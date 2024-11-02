@@ -2,22 +2,22 @@ terraform {
   required_providers {
     vsphere = {
       source  = "hashicorp/vsphere"
-      version = "~>2.9"
+      version = "~> 2.9"
     }
 
     helm = {
       source  = "hashicorp/helm"
-      version = "~>2.15"
+      version = "~> 2.15"
     }
 
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~>2.32"
+      version = "~> 2.32"
     }
 
     kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~>1.14"
+      source  = "alekc/kubectl"
+      version = "~> 2.1"
     }
 
     argocd = {
@@ -27,7 +27,7 @@ terraform {
 
     harbor = {
       source  = "goharbor/harbor"
-      version = "~>3.10"
+      version = "~> 3.10"
     }
 
     vault = {

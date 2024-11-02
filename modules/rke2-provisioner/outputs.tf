@@ -11,6 +11,7 @@ output "production_outputs" {
     loki_domain         = local.loki_domain
     alertmanager_domain = local.alertmanager_domain
     kiali_domain        = local.kiali_domain
+    minio_domain        = local.minio_domain
     rabbitmq_domain     = local.rabbitmq_domain
     sonarqube_domain    = local.sonarqube_domain
     master_node_names = {
@@ -41,6 +42,7 @@ output "development_outputs" {
     loki_domain         = local.loki_domain
     alertmanager_domain = local.alertmanager_domain
     kiali_domain        = local.kiali_domain
+    minio_domain        = local.minio_domain
     sonarqube_domain    = local.sonarqube_domain
     rabbitmq_domain     = local.rabbitmq_domain
     master_node_names = {
@@ -70,6 +72,7 @@ output "staging_outputs" {
     grafana_domain      = local.grafana_domain
     alertmanager_domain = local.alertmanager_domain
     kiali_domain        = local.kiali_domain
+    minio_domain        = local.minio_domain
     loki_domain         = local.loki_domain
     rabbitmq_domain     = local.rabbitmq_domain
     sonarqube_domain    = local.sonarqube_domain

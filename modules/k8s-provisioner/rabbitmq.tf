@@ -13,16 +13,13 @@ resource "kubernetes_namespace" "rabbitmq" {
   count = var.rabbitmq_enabled ? 1 : 0
   metadata {
     name = "rabbitmq"
-    labels = merge(local.default_labels, {
-      istio-injection = "enabled"
-    })
   }
 
   lifecycle {
-    ignore_changes = [
-      metadata[0].annotations,
-      metadata[0].labels
-    ]
+    precondition {
+      condition     = var.cert_manager_enabled == true
+      error_message = "Cert Manager must be enabled to deploy Longhorn"
+    }
   }
 }
 
@@ -33,48 +30,21 @@ resource "helm_release" "rabbitmq" {
   chart      = "rabbitmq"
   namespace  = kubernetes_namespace.rabbitmq[0].metadata[0].name
   version    = var.rabbitmq_version
-  lifecycle {
-    ignore_changes = [
-
-    ]
-  }
-
-  set {
-    name  = "replicaCount"
-    value = local.prod_env ? 4 : 1
-  }
-
-  set {
-    name  = "updateStrategy.type"
-    value = "RollingUpdate" #  must be 'RollingUpdate' or 'OnDelete'
-  }
-
-  set {
-    name  = "clustering.forceBoot"
-    value = true
-  }
 
   values = [
     yamlencode(local.rabbitmq_values)
   ]
 }
 
-resource "kubernetes_secret" "rabbitmq_domain_tls" {
-  count = var.rabbitmq_enabled ? 1 : 0
-
-  metadata {
-    namespace = kubernetes_namespace.rabbitmq[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-}
-
 locals {
   rabbitmq_values = {
+    replicaCount = local.prod_env ? 2 : 1
+    updateStrategy = {
+      type = "RollingUpdate"
+    }
+    clustering = {
+      forceBoot = true
+    }
     topologySpreadConstraints = local.geo_redundant_tsc
     metrics = {
       enabled = true
@@ -88,13 +58,16 @@ locals {
       enabled          = true
       ingressClassName = "nginx"
       tls              = true
-      existingSecret   = "tls-domain"
+      existingSecret   = "rabbitmq-tls"
       pathType         = "Prefix"
       path             = "/"
       hostname         = local.rabbitmq_domain
       annotations = {
         "nginx.ingress.kubernetes.io/force-ssl-redirect" = "true"
         "nginx.ingress.kubernetes.io/backend-protocol"   = "HTTP"
+        "cert-manager.io/cluster-issuer"                 = kubectl_manifest.cluster_ca_issuer[0].name
+        "cert-manager.io/common-name"                    = local.rabbitmq_domain
+        "cert-manager.io/subject-organization"           = var.domain
       }
     }
   }

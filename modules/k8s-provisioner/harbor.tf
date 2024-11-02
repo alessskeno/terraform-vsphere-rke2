@@ -24,60 +24,6 @@ resource "helm_release" "harbor" {
   namespace  = kubernetes_namespace.harbor[0].metadata[0].name
   version    = var.harbor_version
 
-  set {
-    name  = "externalURL"
-    value = "https://${local.harbor_domain}"
-  }
-
-  set {
-    name  = "persistence.enabled"
-    value = true
-  }
-
-  set {
-    name  = "updateStrategy.type"
-    value = "Recreate"
-  }
-
-  set {
-    name  = "persistence.persistentVolumeClaim.registry.size"
-    value = "200Gi"
-  }
-
-  set {
-    name  = "persistence.persistentVolumeClaim.database.size"
-    value = "5Gi"
-  }
-
-  set {
-    name  = "persistence.persistentVolumeClaim.jobservice.jobLog.size"
-    value = "2Gi"
-  }
-
-  set {
-    name  = "persistence.persistentVolumeClaim.redis.size"
-    value = "2Gi"
-  }
-
-  set {
-    name  = "persistence.persistentVolumeClaim.jobservice.jobLog.accessMode"
-    value = "ReadWriteOnce"
-  }
-
-  set {
-    name  = "persistence.persistentVolumeClaim.redis.accessMode"
-    value = "ReadWriteOnce"
-  }
-
-  set_sensitive {
-    name  = "database.internal.password"
-    value = var.general_password
-  }
-
-  set_sensitive {
-    name  = "harborAdminPassword"
-    value = var.general_password
-  }
   values = [
     yamlencode(local.harbor_values)
   ]
@@ -86,6 +32,11 @@ resource "helm_release" "harbor" {
 
 locals {
   harbor_values = {
+    externalURL = "https://${local.harbor_domain}"
+    harborAdminPassword = var.general_password
+    updateStrategy = {
+      type = "Recreate"
+    }
     portal = {
       affinity = local.az3_affinity_rule
     }
@@ -105,6 +56,7 @@ locals {
     database = {
       internal = {
         affinity = local.az3_affinity_rule
+        password = var.general_password
       }
     }
     redis = {
@@ -118,7 +70,7 @@ locals {
         enabled    = true
         certSource = "secret"
         secret = {
-          secretName = "tls-domain"
+          secretName = "harbor-tls"
         }
       }
       ingress = {
@@ -128,7 +80,32 @@ locals {
         className = "nginx"
         annotations = {
           "ingress.kubernetes.io/ssl-redirect" = "true"
+          "cert-manager.io/cluster-issuer"       = kubectl_manifest.cluster_ca_issuer[0].name
+          "cert-manager.io/common-name"          = local.harbor_domain
+          "cert-manager.io/subject-organization" = var.domain
         }
+      }
+    }
+    persistence = {
+      enabled = true
+      persistentVolumeClaim = {
+        registry = {
+          size = "50Gi"
+        }
+        database = {
+          size = "5Gi"
+        }
+        jobservice = {
+          jobLog = {
+            size = "2Gi"
+            accessMode = "ReadWriteOnce"
+          }
+        }
+        redis = {
+          size = "2Gi"
+          accessMode = "ReadWriteOnce"
+        }
+
       }
     }
   }
@@ -141,19 +118,4 @@ module "harbor_provisioner" {
   source            = "./harbor-provisioner"
   namespaces        = var.namespaces
   general_password  = var.general_password
-}
-
-resource "kubernetes_secret" "harbor_domain_tls" {
-  count = var.harbor_enabled ? 1 : 0
-  metadata {
-    namespace = kubernetes_namespace.harbor[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-
-  type = "kubernetes.io/tls"
 }

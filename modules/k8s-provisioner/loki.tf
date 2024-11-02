@@ -9,101 +9,25 @@ resource "kubernetes_namespace" "loki" {
   }
 
   lifecycle {
-    ignore_changes = [
-      metadata[0].annotations,
-      metadata[0].labels
-    ]
+    precondition {
+      condition     = var.cert_manager_enabled == true
+      error_message = "Cert Manager must be enabled to deploy Longhorn"
+    }
   }
 }
 
 resource "helm_release" "loki" {
-  count      = var.loki_enabled ? 1 : 0
-  depends_on = [helm_release.longhorn, kubernetes_secret.loki_domain_tls]
+  count = var.loki_enabled ? 1 : 0
+  depends_on = [helm_release.longhorn]
 
   name       = "loki"
   repository = "https://grafana.github.io/helm-charts"
   chart      = "loki-distributed"
   namespace  = kubernetes_namespace.loki[0].metadata[0].name
 
-
-  set {
-    name  = "ingester.autoscaling.enabled"
-    value = true
-  }
-
-  set {
-    name  = "ingester.autoscaling.targetMemoryUtilizationPercentage"
-    value = 60
-  }
-
-  set {
-    name  = "distributor.autoscaling.enabled"
-    value = true
-  }
-
-  set {
-    name  = "distributor.autoscaling.targetMemoryUtilizationPercentage"
-    value = 60
-  }
-
-  set {
-    name  = "querier.autoscaling.enabled"
-    value = true
-  }
-
-  set {
-    name  = "querier.autoscaling.targetMemoryUtilizationPercentage"
-    value = 60
-  }
-
-  set {
-    name  = "queryFrontend.autoscaling.enabled"
-    value = true
-  }
-
-  set {
-    name  = "queryFrontend.autoscaling.targetMemoryUtilizationPercentage"
-    value = 60
-  }
-
-  set {
-    name  = "gateway.autoscaling.enabled"
-    value = true
-  }
-
-  set {
-    name  = "gateway.deploymentStrategy.type"
-    value = "Recreate"
-  }
-
-  set {
-    name  = "ruler.enabled"
-    value = true
-  }
-
-  set {
-    name  = "gateway.autoscaling.targetMemoryUtilizationPercentage"
-    value = 60
-  }
-
   values = [
     yamlencode(local.loki_values)
   ]
-}
-
-resource "kubernetes_secret" "loki_domain_tls" {
-  count = var.loki_enabled ? 1 : 0
-  metadata {
-    namespace = kubernetes_namespace.loki[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-
-  type = "kubernetes.io/tls"
 }
 
 locals {
@@ -116,15 +40,19 @@ locals {
       clusterDomain = "cluster.local"
       dnsService    = "rke2-coredns-rke2-coredns"
     }
+    ruler = {
+      enabled = true
+    }
     ingester = {
       autoscaling = {
-        enabled     = true
-        minReplicas = 1
-        maxReplicas = 3
+        targetMemoryUtilizationPercentage = 60
+        enabled                           = true
+        minReplicas                       = 1
+        maxReplicas                       = 3
       }
       persistence = {
         enabled = true
-        claims  = [
+        claims = [
           {
             name         = "data"
             size         = "5Gi"
@@ -144,6 +72,12 @@ locals {
       }
     }
     distributor = {
+      autoscaling = {
+        targetMemoryUtilizationPercentage = 60
+        enabled                           = true
+        minReplicas                       = 1
+        maxReplicas                       = 3
+      }
       resources = {
         requests = {
           cpu    = "250m"
@@ -156,6 +90,12 @@ locals {
       }
     }
     querier = {
+      autoscaling = {
+        targetMemoryUtilizationPercentage = 60
+        enabled                           = true
+        minReplicas                       = 1
+        maxReplicas                       = 3
+      }
       resources = {
         requests = {
           cpu    = "250m"
@@ -168,6 +108,12 @@ locals {
       }
     }
     queryFrontend = {
+      autoscaling = {
+        targetMemoryUtilizationPercentage = 60
+        enabled                           = true
+        minReplicas                       = 1
+        maxReplicas                       = 3
+      }
       resources = {
         requests = {
           cpu    = "250m"
@@ -180,12 +126,26 @@ locals {
       }
     }
     gateway = {
+      deploymentStrategy = {
+        type = "Recreate"
+      }
+      autoscaling = {
+        targetMemoryUtilizationPercentage = 60
+        enabled                           = true
+        minReplicas                       = 1
+        maxReplicas                       = 3
+      }
       ingress = {
         enabled = false
         labels  = local.default_labels
-        hosts   = [
+        annotations = {
+          "cert-manager.io/cluster-issuer" = kubectl_manifest.cluster_ca_issuer[0].name
+          "cert-manager.io/common-name"          = local.loki_domain
+          "cert-manager.io/subject-organization" = var.domain
+        }
+        hosts = [
           {
-            host  = local.loki_domain
+            host = local.loki_domain
             paths = [
               {
                 path     = "/"
@@ -196,8 +156,8 @@ locals {
         ]
         tls = [
           {
-            hosts      = ["*.${var.domain}"]
-            secretName = "tls-domain"
+            hosts = [local.loki_domain]
+            secretName = "loki-tls"
           }
         ]
       }

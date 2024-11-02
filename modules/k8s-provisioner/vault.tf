@@ -55,31 +55,15 @@ resource "kubernetes_secret" "vault_crt_key_chain" {
 
   data = {
     "fullchain.pem" = base64decode(var.vault_crt)
-    "server.crt"    = base64decode(var.vault_crt)
-    "server.key"    = base64decode(var.vault_key)
+    "server.crt" = base64decode(var.vault_crt)
+    "server.key" = base64decode(var.vault_key)
   }
-}
-
-resource "kubernetes_secret" "vault_domain_tls" {
-  count = var.vault_enabled ? 1 : 0
-  metadata {
-    namespace = kubernetes_namespace.vault[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-
-  type = "kubernetes.io/tls"
 }
 
 resource "helm_release" "vault" {
   depends_on = [
     kubernetes_secret.vault_root_crt,
     kubernetes_secret.vault_crt_key_chain,
-    kubernetes_secret.vault_domain_tls
   ]
 
   count      = var.vault_enabled ? 1 : 0
@@ -88,42 +72,6 @@ resource "helm_release" "vault" {
   chart      = "vault"
   namespace  = kubernetes_namespace.vault[0].metadata[0].name
   version    = var.vault_version
-
-
-  set {
-    name  = "injector.enabled"
-    value = false
-  }
-
-  set {
-    name  = "server.authDelegator.enabled"
-    value = true
-  }
-
-  set {
-    name  = "server.auditStorage.enabled"
-    value = true
-  }
-
-  set {
-    name  = "server.auditStorage.size"
-    value = "2Gi"
-  }
-
-  set {
-    name  = "server.dataStorage.enabled"
-    value = true
-  }
-
-  set {
-    name  = "server.dataStorage.size"
-    value = "10Gi"
-  }
-
-  set {
-    name  = "server.updateStrategyType"
-    value = "RollingUpdate" #  must be 'RollingUpdate' or 'OnDelete'
-  }
 
   values = [
     yamlencode(local.vault_values)
@@ -137,6 +85,21 @@ locals {
       tlsDisable = false
     },
     server = {
+      authDelegator = {
+        enabled = true
+      },
+      auditStorage = {
+        enabled = true
+        size    = "2Gi"
+      },
+      dataStorage = {
+        enabled = true
+        size    = "10Gi"
+      },
+      updateStrategyType = "RollingUpdate",
+      injector = {
+        enabled = false
+      },
       affinity = {
         podAntiAffinity = {
           requiredDuringSchedulingIgnoredDuringExecution = [
@@ -170,24 +133,27 @@ locals {
         ingressClassName = "nginx"
         pathType         = "Prefix"
         activeService    = true
-        hosts            = [
+        hosts = [
           {
-            host  = local.vault_domain
+            host = local.vault_domain
             paths = []
           }
         ]
         annotations = {
           "nginx.ingress.kubernetes.io/force-ssl-redirect" = "true"
+          "cert-manager.io/cluster-issuer"                 = kubectl_manifest.cluster_ca_issuer[0].name
+          "cert-manager.io/common-name"                    = local.vault_domain
+          "cert-manager.io/subject-organization" = var.domain
           # ensures that all incoming traffic is using SSL/TLS for security
-          "nginx.ingress.kubernetes.io/backend-protocol" = "HTTPS"
+          "nginx.ingress.kubernetes.io/backend-protocol"   = "HTTPS"
           # communication between the Ingress controller and the service should be encrypted, vault listener servers on https
           # nginx.ingress.kubernetes.io/proxy-ssl-secret: "namespace/ca-secret"
           # nginx.ingress.kubernetes.io/proxy-ssl-verify: "true"
         }
         tls = [
           {
-            hosts      = ["*.${var.domain}"]
-            secretName = "tls-domain"
+            hosts = [local.vault_domain]
+            secretName = "vault-tls"
           }
         ]
       }

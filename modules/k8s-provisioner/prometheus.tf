@@ -22,10 +22,10 @@ resource "kubernetes_namespace" "prometheus" {
   }
 
   lifecycle {
-    ignore_changes = [
-      metadata[0].annotations,
-      metadata[0].labels
-    ]
+    precondition {
+      condition     = var.cert_manager_enabled == true
+      error_message = "Cert Manager must be enabled to deploy Longhorn"
+    }
   }
 }
 
@@ -46,7 +46,6 @@ resource "kubernetes_namespace" "exporters" {
 resource "helm_release" "prometheus" {
   depends_on = [
     helm_release.longhorn,
-    kubernetes_secret.prometheus_domain_tls,
     kubernetes_secret.prometheus_basic_auth
   ]
   count      = var.prometheus_enabled ? 1 : 0
@@ -55,49 +54,21 @@ resource "helm_release" "prometheus" {
   chart      = "prometheus"
   namespace  = kubernetes_namespace.prometheus[0].metadata[0].name
 
-  set {
-    name  = "server.persistentVolume.storageClass"
-    value = var.storage_class_name
-  }
-
-  set {
-    name  = "server.persistentVolume.size"
-    value = var.env == "prod" ? "10Gi" : "5Gi"
-  }
-
-  set {
-    name  = "server.retention"
-    value = "30d"
-  }
-
-  set {
-    name  = "server.retentionSize"
-    value = "7GB"
-  }
-
   values = [
     yamlencode(local.prometheus_values)
   ]
 }
 
-resource "kubernetes_secret" "prometheus_domain_tls" {
-  count = var.prometheus_enabled ? 1 : 0
-  metadata {
-    namespace = kubernetes_namespace.prometheus[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-
-  type = "kubernetes.io/tls"
-}
-
 locals {
   prometheus_values = {
     server = {
+      retentionSize = "7GB"
+      retention      = "30d"
+      persistentVolume = {
+        enabled = true
+        size    = var.env == "prod" ? "10Gi" : "5Gi"
+        storageClass = var.storage_class_name
+      }
 
       ingress = {
         enabled = true
@@ -106,12 +77,15 @@ locals {
           "nginx.ingress.kubernetes.io/backend-protocol"   = "HTTP"
           "nginx.ingress.kubernetes.io/auth-secret"        = "basic-auth"
           "nginx.ingress.kubernetes.io/auth-type"          = "basic"
+          "cert-manager.io/cluster-issuer"                 = kubectl_manifest.cluster_ca_issuer[0].name
+          "cert-manager.io/common-name"          = local.prometheus_domain
+          "cert-manager.io/subject-organization" = var.domain
         }
         hosts = [local.prometheus_domain]
         tls = [
           {
-            hosts      = ["*.${var.domain}"]
-            secretName = "tls-domain"
+            hosts = [local.prometheus_domain]
+            secretName = "prometheus-tls"
           }
         ]
       }
@@ -131,7 +105,8 @@ locals {
           secretName = "slack-template"
           name       = "slack-template"
           mountPath  = "/tmp/"
-        }]
+        }
+      ]
       config = {
         global = {
           resolve_timeout = "5m"
@@ -139,20 +114,20 @@ locals {
         templates = ["/etc/alertmanager/*.tmpl", "/tmp/*.tmpl"]
         route = {
           repeat_interval = "12h"
-          group_by        = ["alertname"]
+          group_by = ["alertname"]
           receiver        = "slack-host"
           routes = [
             {
               receiver        = "slack-network"
               group_wait      = "10s"
-              matchers        = ["type=~junos|mikrotik|cisco"]
+              matchers = ["type=~junos|mikrotik|cisco"]
               continue        = true
               repeat_interval = "4h"
             },
             {
               receiver        = "slack-host"
               group_wait      = "10s"
-              matchers        = ["type=~snapshot|vm|kubernetes|host|hpe-ilo|uptimekuma"]
+              matchers = ["type=~snapshot|vm|kubernetes|host|hpe-ilo|uptimekuma"]
               continue        = true
               repeat_interval = "4h"
             }
@@ -201,7 +176,7 @@ locals {
                     type = "button"
                     name = "mutebutton"
                     text = "Silence :no_bell:"
-                    url  = file("${path.root}/files/configurations/slack-silence-url.txt")
+                    url = file("${path.root}/files/configurations/slack-silence-url.txt")
                   }
                 ]
               }
@@ -249,7 +224,7 @@ locals {
                     type = "button"
                     name = "mutebutton"
                     text = "Silence :no_bell:"
-                    url  = file("${path.root}/files/configurations/slack-silence-url.txt")
+                    url = file("${path.root}/files/configurations/slack-silence-url.txt")
                   }
                 ]
               }
@@ -264,6 +239,7 @@ locals {
         annotations = {
           "nginx.ingress.kubernetes.io/auth-secret" = "basic-auth"
           "nginx.ingress.kubernetes.io/auth-type"   = "basic"
+          "cert-manager.io/cluster-issuer"          = kubectl_manifest.cluster_ca_issuer[0].name
         }
         hosts = [
           {
@@ -278,8 +254,8 @@ locals {
         ]
         tls = [
           {
-            hosts      = ["*.${var.domain}"]
-            secretName = "tls-domain"
+            hosts = [local.alertmanager_domain]
+            secretName = "alertmanager-tls"
           }
         ]
       }

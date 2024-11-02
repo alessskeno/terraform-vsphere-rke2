@@ -8,10 +8,10 @@ resource "kubernetes_namespace" "grafana" {
   }
 
   lifecycle {
-    ignore_changes = [
-      metadata[0].annotations,
-      metadata[0].labels
-    ]
+    precondition {
+      condition     = var.cert_manager_enabled == true
+      error_message = "Cert Manager must be enabled to deploy Longhorn"
+    }
   }
 }
 
@@ -20,8 +20,7 @@ resource "helm_release" "grafana" {
 
   depends_on = [
     helm_release.longhorn,
-    kubernetes_secret.grafana_domain_root_crt,
-    kubernetes_secret.grafana_domain_tls
+    kubernetes_secret.grafana_domain_root_crt
   ]
 
   name       = "grafana"
@@ -29,20 +28,6 @@ resource "helm_release" "grafana" {
   chart      = "grafana"
   namespace  = kubernetes_namespace.grafana[0].metadata[0].name
   version    = var.grafana_version
-
-  set {
-    name  = "adminUser"
-    value = "devops"
-  }
-  set {
-    name  = "deploymentStrategy.type"
-    value = "Recreate"
-  }
-
-  set_sensitive {
-    name  = "adminPassword"
-    value = var.general_password
-  }
 
   values = [
     yamlencode(local.grafana_values)
@@ -62,23 +47,13 @@ resource "kubernetes_secret" "grafana_domain_root_crt" {
   }
 }
 
-resource "kubernetes_secret" "grafana_domain_tls" {
-  count = var.grafana_enabled ? 1 : 0
-  metadata {
-    namespace = kubernetes_namespace.grafana[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-
-  type = "kubernetes.io/tls"
-}
-
 locals {
   grafana_values = {
+    adminUser     = var.general_user
+    adminPassword = var.general_password
+    deploymentStrategy = {
+      type = "Recreate"
+    }
     affinity = local.az1_affinity_rule
     persistence = {
       enabled          = true
@@ -221,13 +196,18 @@ locals {
     ingress = {
       enabled          = true
       ingressClassName = "nginx"
+      annotations = {
+        "cert-manager.io/cluster-issuer"       = kubectl_manifest.cluster_ca_issuer[0].name
+        "cert-manager.io/common-name"          = local.grafana_domain
+        "cert-manager.io/subject-organization" = var.domain
+      }
       hosts = [
         local.grafana_domain
       ]
       tls = [
         {
-          secretName = "tls-domain"
-          hosts = ["*.${var.domain}"]
+          secretName = "grafana-tls"
+          hosts = [local.grafana_domain]
         }
       ]
     },

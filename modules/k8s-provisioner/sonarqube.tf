@@ -8,10 +8,10 @@ resource "kubernetes_namespace" "sonarqube" {
   }
 
   lifecycle {
-    ignore_changes = [
-      metadata[0].annotations,
-      metadata[0].labels
-    ]
+    precondition {
+      condition     = var.cert_manager_enabled == true
+      error_message = "Cert Manager must be enabled to deploy Longhorn"
+    }
   }
 }
 
@@ -19,7 +19,6 @@ resource "helm_release" "sonarqube" {
   count = var.sonarqube_enabled ? 1 : 0
 
   depends_on = [
-    kubernetes_secret.sonarqube_domain_tls,
     kubernetes_secret.domain_root_crt
   ]
 
@@ -29,34 +28,9 @@ resource "helm_release" "sonarqube" {
   namespace  = kubernetes_namespace.sonarqube[0].metadata[0].name
   version    = var.sonarqube_version
 
-  set_sensitive {
-    name  = "account.currentAdminPassword"
-    value = var.general_password
-  }
-
-  set {
-    name  = "deploymentStrategy.type"
-    value = "Recreate"
-  }
-
   values = [
     yamlencode(local.sonarqube_values)
   ]
-}
-
-resource "kubernetes_secret" "sonarqube_domain_tls" {
-  count = var.sonarqube_enabled ? 1 : 0
-  metadata {
-    namespace = kubernetes_namespace.sonarqube[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-
-  type = "kubernetes.io/tls"
 }
 
 resource "kubernetes_secret" "sonarqube_domain_root_crt" {
@@ -73,6 +47,12 @@ resource "kubernetes_secret" "sonarqube_domain_root_crt" {
 
 locals {
   sonarqube_values = {
+    account = {
+      currentAdminPassword = var.general_password
+    },
+    deploymentStrategy = {
+      type = "Recreate"
+    },
     affinity = local.az1_affinity_rule
     caCerts = {
       enabled = true
@@ -94,6 +74,9 @@ locals {
       ingressClassName = "nginx"
       annotations = {
         "nginx.ingress.kubernetes.io/force-ssl-redirect" = "true"
+        "cert-manager.io/cluster-issuer"                 = kubectl_manifest.cluster_ca_issuer[0].name
+        "cert-manager.io/common-name"                    = local.sonarqube_domain
+        "cert-manager.io/subject-organization"           = var.domain
       }
       hosts = [
         {
@@ -104,8 +87,8 @@ locals {
       ]
       "tls" = [
         {
-          "hosts"      = ["*.${var.domain}"]
-          "secretName" = "tls-domain"
+          "hosts" = [local.sonarqube_domain]
+          "secretName" = "sonarqube-tls"
         }
       ]
     },

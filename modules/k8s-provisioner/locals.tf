@@ -23,7 +23,7 @@ locals {
               {
                 key      = "topology.kubernetes.io/zone"
                 operator = "In"
-                values   = ["az1"]
+                values = ["az1"]
               }
             ]
           }
@@ -42,7 +42,7 @@ locals {
               {
                 key      = "topology.kubernetes.io/zone"
                 operator = "In"
-                values   = ["az3"]
+                values = ["az3"]
               }
             ]
           }
@@ -101,6 +101,7 @@ locals {
   kiali_domain        = var.vcloud_project_outputs.kiali_domain
   rabbitmq_domain     = var.vcloud_project_outputs.rabbitmq_domain
   loki_domain         = var.vcloud_project_outputs.loki_domain
+  minio_domain        = var.vcloud_project_outputs.minio_domain
 
 
   master_nodes = {

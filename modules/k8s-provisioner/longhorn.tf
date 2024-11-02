@@ -54,10 +54,10 @@ resource "kubernetes_namespace" "longhorn" {
   }
 
   lifecycle {
-    ignore_changes = [
-      metadata[0].annotations,
-      metadata[0].labels
-    ]
+    precondition {
+      condition     = var.cert_manager_enabled == true
+      error_message = "Cert Manager must be enabled to deploy Longhorn"
+    }
   }
 }
 
@@ -74,91 +74,6 @@ resource "helm_release" "longhorn" {
   chart      = "longhorn"
   namespace  = kubernetes_namespace.longhorn[0].metadata[0].name
 
-  set {
-    name  = "defaultSettings.createDefaultDiskLabeledNodes"
-    value = true
-  }
-
-  set {
-    name  = "defaultSettings.replicaSoftAntiAffinity"
-    value = false
-  }
-
-  set {
-    name  = "defaultSettings.replicaZoneSoftAntiAffinity"
-    value = true
-  }
-
-  set {
-    name  = "defaultSettings.autoDeletePodWhenVolumeDetachedUnexpectedly"
-    value = true
-  }
-
-  set {
-    name  = "defaultSettings.nodeDownPodDeletionPolicy"
-    value = "delete-both-statefulset-and-deployment-pod"
-  }
-
-  set {
-    name  = "defaultSettings.defaultDataLocality"
-    value = "disabled"
-  }
-
-  set {
-    name  = "persistence.defaultClassReplicaCount"
-    value = "1"
-  }
-
-  set {
-    name  = "persistence.reclaimPolicy"
-    value = "Retain"
-  }
-
-  set {
-    name  = "ingress.enabled"
-    value = true
-  }
-
-  set {
-    name  = "ingress.ingressClassName"
-    value = "nginx"
-  }
-
-  set {
-    name  = "ingress.host"
-    value = local.longhorn_domain
-  }
-
-  set {
-    name  = "ingress.tls"
-    value = true
-  }
-
-  set {
-    name  = "ingress.tlsSecret"
-    value = "tls-domain"
-  }
-
-  set {
-    name  = "defaultSettings.replicaAutoBalance"
-    value = "disabled"
-  }
-
-  set {
-    name  = "defaultSettings.backupTarget"
-    value = local.lh_nfs_endpoint ## Change this to NFS or other storage
-  }
-
-  set {
-    name  = "ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-type"
-    value = "basic"
-  }
-
-  set {
-    name  = "ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/auth-secret"
-    value = kubernetes_secret.longhorn_ingress_basic_auth[0].metadata[0].name
-  }
-
   values = [
     yamlencode(local.longhorn_values)
   ]
@@ -168,8 +83,34 @@ locals {
   lh_nfs_endpoint = "nfs://${local.nfs_ip_az1}:/mnt/nfs_share"
 
   longhorn_values = {
+    ingress = {
+      enabled = true
+      annotations = {
+        "cert-manager.io/cluster-issuer"          = kubectl_manifest.cluster_ca_issuer[0].name
+        "nginx.ingress.kubernetes.io/auth-type"   = "basic"
+        "nginx.ingress.kubernetes.io/auth-secret" = kubernetes_secret.longhorn_ingress_basic_auth[0].metadata[0].name
+        "cert-manager.io/common-name"             = local.longhorn_domain
+        "cert-manager.io/subject-organization"    = var.domain
+      }
+      ingressClassName = "nginx"
+      tls              = true
+      tlsSecret        = "longhorn-tls"
+      host             = local.longhorn_domain
+    }
+    persistence = {
+      defaultClassReplicaCount = 1
+      reclaimPolicy            = "Retain"
+    }
     defaultSettings = {
-      taintToleration = "node-role.kubernetes.io/master=true:NoSchedule"
+      createDefaultDiskLabeledNodes               = true
+      replicaSoftAntiAffinity                     = false
+      replicaZoneSoftAntiAffinity                 = true
+      autoDeletePodWhenVolumeDetachedUnexpectedly = true
+      nodeDownPodDeletionPolicy                   = "delete-both-statefulset-and-deployment-pod"
+      defaultDataLocality                         = "disabled"
+      replicaAutoBalance                          = "disabled"
+      backupTarget                                = local.lh_nfs_endpoint
+      taintToleration                             = "node-role.kubernetes.io/master=true:NoSchedule"
     },
     longhornManager = {
       tolerations = [
@@ -195,21 +136,6 @@ resource "kubernetes_secret" "longhorn_ingress_basic_auth" {
   }
 }
 
-resource "kubernetes_secret" "longhorn_domain_tls" {
-  count = var.longhorn_enabled ? 1 : 0
-  metadata {
-    namespace = kubernetes_namespace.longhorn[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-
-  type = "kubernetes.io/tls"
-}
-
 # Backup Recurring jobs
 # Label: recurring-job.longhorn.io/daily=enabled. Labeling with this group name is optional -default groups is included,
 # so any volume will adopt this job without a label.
@@ -219,8 +145,9 @@ resource "kubectl_manifest" "daily_backup_job" {
     helm_release.longhorn
   ]
 
+
   yaml_body = yamlencode({
-    apiVersion = "longhorn.io/v1beta1"
+    apiVersion = "longhorn.io/v1beta2"
     kind       = "RecurringJob"
     metadata = {
       name      = "daily-backup"
@@ -232,6 +159,8 @@ resource "kubectl_manifest" "daily_backup_job" {
       groups = ["default", "daily"]
       retain      = 3
       concurrency = 3
+      name        = "daily-backup"
+      parameters = {}
       labels = merge(local.default_labels,
         {
           "backup"         = "daily"
@@ -249,8 +178,9 @@ resource "kubectl_manifest" "weekly_backup_job" {
     helm_release.longhorn
   ]
 
+
   yaml_body = yamlencode({
-    apiVersion = "longhorn.io/v1beta1"
+    apiVersion = "longhorn.io/v1beta2"
     kind       = "RecurringJob"
     metadata = {
       name      = "weekly-backup"
@@ -262,6 +192,8 @@ resource "kubectl_manifest" "weekly_backup_job" {
       groups = ["weekly"]
       retain      = 30
       concurrency = 3
+      name        = "weekly-backup"
+      parameters = {}
       labels = merge(local.default_labels,
         {
           "backup"         = "weekly"
@@ -280,7 +212,7 @@ resource "kubectl_manifest" "monthly_backup_job" {
   ]
 
   yaml_body = yamlencode({
-    apiVersion = "longhorn.io/v1beta1"
+    apiVersion = "longhorn.io/v1beta2"
     kind       = "RecurringJob"
     metadata = {
       name      = "monthly-backup"
@@ -292,12 +224,43 @@ resource "kubectl_manifest" "monthly_backup_job" {
       groups = ["monthly"]
       retain      = 90
       concurrency = 3
+      name        = "monthly-backup"
+      parameters = {}
       labels = merge(local.default_labels,
         {
           "backup"         = "monthly"
           "retention-days" = "90"
         }
       )
+    }
+  })
+}
+
+resource "kubectl_manifest" "filesystem_trim" {
+  count = var.longhorn_enabled ? 1 : 0
+  depends_on = [
+    helm_release.longhorn
+  ]
+  yaml_body = yamlencode({
+    apiVersion = "longhorn.io/v1beta2"
+    kind       = "RecurringJob"
+    metadata = {
+      name      = "filesystem-trim"
+      namespace = "longhorn-system"
+    }
+    spec = {
+      cron = "0 * * * *" # Every hour
+      task = "filesystem-trim"
+      groups = ["default"]
+      labels = merge(local.default_labels,
+        {
+          "trim" = "filesystem"
+        }
+      )
+      retain      = 0
+      concurrency = 1
+      name        = "filesystem-trim"
+      parameters = {}
     }
   })
 }

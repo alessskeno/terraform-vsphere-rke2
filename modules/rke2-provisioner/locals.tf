@@ -1,7 +1,7 @@
 locals {
   master_endpoints_az1 = slice(var.master_ip_range_az1, 0, var.master_node_count)
   master_endpoints_az3 = var.multi_az ? slice(var.master_ip_range_az3, 0, var.master_node_count) : []
-  nfs_ip_az1           = try([var.nfs_ip_az1], [])
+  nfs_ip_az1 = try([var.nfs_ip_az1], [])
 
   worker_endpoints_az1 = slice(var.worker_ip_range_az1, 0, var.worker_node_count)
   worker_endpoints_az3 = var.multi_az ? slice(var.worker_ip_range_az3, 0, var.worker_node_count) : []
@@ -27,6 +27,7 @@ locals {
   prometheus_domain   = var.env == "prod" ? "prometheus.${var.domain}" : "prometheus-${var.env}.${var.domain}"
   alertmanager_domain = var.env == "prod" ? "alertmanager.${var.domain}" : "alertmanager-${var.env}.${var.domain}"
   kiali_domain        = var.env == "prod" ? "kiali.${var.domain}" : "kiali-${var.env}.${var.domain}"
+  minio_domain        = var.env == "prod" ? "minio.${var.domain}" : "minio-${var.env}.${var.domain}"
   rabbitmq_domain     = var.env == "prod" ? "rabbitmq.${var.domain}" : "rabbitmq-${var.env}.${var.domain}"
   sonarqube_domain    = var.env == "prod" ? "sonar.${var.domain}" : "sonar-${var.env}.${var.domain}"
   loki_domain         = var.env == "prod" ? "loki.${var.domain}" : "loki-${var.env}.${var.domain}"

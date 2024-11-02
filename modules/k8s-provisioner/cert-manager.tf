@@ -33,6 +33,7 @@ resource "helm_release" "cert_manager" {
 
 resource "kubernetes_secret" "cert_manager_root_ca" {
   count = var.cert_manager_enabled ? 1 : 0
+  depends_on = [helm_release.cert_manager]
 
   metadata {
     name      = "domain-root-crt"
@@ -40,13 +41,15 @@ resource "kubernetes_secret" "cert_manager_root_ca" {
   }
 
   data = {
-    "root-ca.crt" = base64decode(var.domain_root_crt)
-    "root-ca.key" = base64decode(var.domain_root_key)
+    "ca.crt" = base64decode(var.domain_root_crt)
+    "tls.crt" = base64decode(var.domain_root_crt)
+    "tls.key" = base64decode(var.domain_root_key)
   }
 }
 
 resource "kubectl_manifest" "cluster_ca_issuer" {
   count = var.cert_manager_enabled ? 1 : 0
+  depends_on = [helm_release.cert_manager]
 
   yaml_body = yamlencode({
     apiVersion = "cert-manager.io/v1"

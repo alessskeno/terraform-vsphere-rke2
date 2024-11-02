@@ -6,10 +6,10 @@ resource "kubernetes_namespace" "minio" {
   }
 
   lifecycle {
-    ignore_changes = [
-      metadata[0].labels,
-      metadata[0].annotations,
-    ]
+    precondition {
+      condition     = var.cert_manager_enabled == true
+      error_message = "Cert Manager must be enabled to deploy Longhorn"
+    }
   }
 }
 
@@ -25,40 +25,6 @@ resource "helm_release" "minio" {
   chart      = "minio"
   namespace  = kubernetes_namespace.minio[0].metadata[0].name
 
-  set {
-    name  = "persistence.storageClass"
-    value = var.storage_class_name
-  }
-
-  set {
-    name  = "persistence.size"
-    value = "10Gi"
-  }
-
-  set {
-    name  = "mode"
-    value = "distributed"
-  }
-
-  set {
-    name  = "statefulset.replicaCount"
-    value = "2"
-  }
-
-  set {
-    name  = "statefulset.drivesPerNode"
-    value = "4"
-  }
-
-  set {
-    name  = "auth.rootUser"
-    value = var.general_user
-  }
-
-  set {
-    name  = "auth.rootPassword"
-    value = var.general_password
-  }
 
   values = [
     yamlencode(local.minio_values)
@@ -68,31 +34,34 @@ resource "helm_release" "minio" {
 locals {
   minio_values = {
     ingress = {
+      annotations = {
+        "cert-manager.io/cluster-issuer"       = kubectl_manifest.cluster_ca_issuer[0].name
+        "cert-manager.io/common-name"          = local.minio_domain
+        "cert-manager.io/subject-organization" = var.domain
+      }
       enabled          = true
       ingressClassName = "nginx"
-      hostname         = "minio.${var.domain}"
+      hostname         = local.minio_domain
       tls              = true
       extraTls = [
         {
-          hosts = ["minio.${var.domain}"]
-          secretName = "tls-domain"
+          hosts = [local.minio_domain]
+          secretName = "minio-tls"
         }
       ]
     }
+    persistence = {
+      size         = "10Gi"
+      storageClass = var.storage_class_name
+    }
+    mode = "distributed"
+    statefulset = {
+      replicaCount  = 2
+      drivesPerNode = 4
+    }
+    auth = {
+      rootUser     = var.general_user
+      rootPassword = var.general_password
+    }
   }
-}
-
-resource "kubernetes_secret" "minio_domain_tls" {
-  count = var.minio_enabled ? 1 : 0
-  metadata {
-    namespace = kubernetes_namespace.minio[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-
-  type = "kubernetes.io/tls"
 }

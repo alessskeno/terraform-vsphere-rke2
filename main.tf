@@ -75,6 +75,7 @@ module "k8s_provisioner_prod" {
   domain_root_crt = var.domain_root_crt
   domain_crt      = var.domain_crt
   domain_key      = var.domain_key
+  domain_root_key = var.domain_root_key
 
 
 
@@ -114,7 +115,7 @@ module "k8s_provisioner_prod" {
   kiali_enabled                = false
   sonarqube_enabled            = false
   argocd_enabled               = false
-  cert_manager_enabled         = false
+  cert_manager_enabled         = true
   vault_token_reviewer_enabled = false
   external_argocd_enabled      = false
 
