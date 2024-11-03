@@ -93,7 +93,7 @@ module "k8s_provisioner_prod" {
   rabbitmq_version         = "15.0.2"
   redis_version            = "20.2.0"
   vault_version            = "0.28.1"
-  kiali_version            = "1.79.0"
+  kiali_version            = "1.89.0"
   sonarqube_version        = "10.7.0+3598"
   argocd_version           = "2.0.2"
   cert_manager_version     = "1.16.1"
@@ -112,7 +112,6 @@ module "k8s_provisioner_prod" {
   rabbitmq_enabled             = false
   redis_enabled                = false
   vault_enabled                = false
-  kiali_enabled                = false
   sonarqube_enabled            = false
   argocd_enabled               = false
   cert_manager_enabled         = true

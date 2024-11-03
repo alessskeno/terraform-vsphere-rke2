@@ -20,7 +20,6 @@ variable "loki_enabled" { default = false }
 variable "minio_enabled" { default = false }
 variable "promtail_enabled" { default = false }
 variable "sonarqube_enabled" { default = false }
-variable "kiali_enabled" { default = false }
 variable "cert_manager_enabled" { default = false }
 variable "external_argocd_enabled" { default = false }
 variable "vault_token_reviewer_enabled" { default = false }
