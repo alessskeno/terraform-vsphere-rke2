@@ -40,6 +40,9 @@ resource "time_sleep" "wait_3_minutes_for_node_ready" {
     vsphere_virtual_machine.worker_nodes_az3, vsphere_virtual_machine.master_nodes_az3
   ]
   create_duration = "180s"
+  triggers = {
+    nodes = join(",", concat(local.master_endpoints, local.worker_endpoints))
+  }
 }
 
 resource "null_resource" "ansible_add_hosts" {

@@ -150,7 +150,7 @@ variable "worker_node_count_prod" {
 }
 
 variable "master_node_count_prod" {
-  default = 1
+  default = 2
 }
 
 # Staging vars

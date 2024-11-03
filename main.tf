@@ -178,12 +178,12 @@ module "rke2_prod_cluster" {
   storage_node_count = var.storage_node_count_prod
 
   # Resources
-  worker_node_cpus      = 4
+  worker_node_cpus      = 8
   worker_node_memory    = 8192
   worker_node_disk_size = 100
 
-  master_node_cpus      = 4
-  master_node_memory    = 4096
+  master_node_cpus      = 8
+  master_node_memory    = 8192
   master_node_disk_size = 50
 
   storage_node_disk_size = 100

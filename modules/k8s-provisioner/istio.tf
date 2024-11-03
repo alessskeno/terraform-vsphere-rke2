@@ -218,15 +218,28 @@ resource "helm_release" "istiod" {
 
 locals {
   istiod_values = {
-    profile = "ambient"
+    sidecarInjectorWebhook = {
+      rewriteAppHTTPProbe = false
+    }
+    # telemetry = {
+    #   enabled = false
+    #   v2 = {
+    #     enabled = false
+    #   }
+    # } # For ambient mode, telemetry should be disabled
+    # istio_cni = {
+    #   enabled = true
+    #   chained = true
+    # }  # For injection based installation, istio-cni is not required
+    # profile = "ambient" # For ambient mode, profile should be set to ambient
     pilot = {
-      env = {
-        "VERIFY_CERTIFICATE_AT_CLIENT"     = "true"
-        "ENABLE_AUTO_SNI"                  = "true"
-        "PILOT_ENABLE_HBONE"               = "true"
-        "CA_TRUSTED_NODE_ACCOUNTS"         = "istio-system/ztunnel,kube-system/ztunnel"
-        "PILOT_ENABLE_AMBIENT_CONTROLLERS" = "true"
-      }
+      # env = {
+      #   "VERIFY_CERTIFICATE_AT_CLIENT"     = "true"
+      #   "ENABLE_AUTO_SNI"                  = "true"
+      #   "PILOT_ENABLE_HBONE"               = "true"
+      #   "CA_TRUSTED_NODE_ACCOUNTS"         = "istio-system/ztunnel,kube-system/ztunnel"
+      #   "PILOT_ENABLE_AMBIENT_CONTROLLERS" = "true"
+      # } # For ambient mode, pilot should be configured with these env variables
       autoscaleMin = local.prod_env ? 2 : 1
       topologySpreadConstraints = [
         {
@@ -241,11 +254,26 @@ locals {
         }
       ]
     }
+    global = {
+      proxy = {
+        logLevel = "error" # |trace|debug|info|warning|error|critical|off|
+        resources = {
+          requests = {
+            cpu    = "100m"
+            memory = "128Mi"
+          }
+          limits = {
+            cpu    = "2"
+            memory = "1024Mi"
+          }
+        }
+      }
+    },
     meshConfig = {
       defaultConfig = {
         proxyMetadata = {
           ISTIO_META_DNS_CAPTURE  = "true"
-          ISTIO_META_ENABLE_HBONE = "true"
+          # ISTIO_META_ENABLE_HBONE = "true" # Enable this if you want to use ambient mode
         }
       }
       accessLogFile         = "/dev/stdout"
@@ -259,8 +287,21 @@ locals {
   }
 }
 
-# Istio CNI
-resource "helm_release" "istio_cni" {
+### Istio ztunnel
+/*resource "helm_release" "ztunnel" {
+  count = var.istio_enabled ? 1 : 0
+
+  depends_on = [helm_release.istiod]
+
+  name       = "ztunnel"
+  repository = "https://istio-release.storage.googleapis.com/charts"
+  chart      = "ztunnel"
+  namespace  = kubernetes_namespace.istio[0].metadata[0].name
+  version    = var.istio_version
+}*/ # For injection based installation, ztunnel is not required
+
+### Istio CNI
+/*resource "helm_release" "istio_cni" {
   count = var.istio_enabled ? 1 : 0
 
   depends_on = [helm_release.istiod]
@@ -274,18 +315,23 @@ resource "helm_release" "istio_cni" {
   values = [
     yamlencode(local.istio_cni_values)
   ]
-}
+} # For injection based installation, istio-cni is not required
 
 locals {
   istio_cni_values = {
-    profile = "ambient"
-    logLevel = "error" # |trace|debug|info|warning|error|critical|off|
+    profile    = "ambient"
+    logLevel = "info" # |trace|debug|info|warning|error|critical|off|
     privileged = true
     ambient = {
       enabled = true
     }
+    excludeNamespaces = [
+      "kube-system",
+      "kube-public",
+      "kube-node-lease",
+    ]
   }
-}
+}*/
 
 # Istio Ingress Gateway
 resource "helm_release" "istio_ingress_gateway" {
@@ -417,29 +463,12 @@ locals {
 }
 
 # Kiali-server
-resource "kubernetes_secret" "kiali_domain_tls" {
-  count = var.istio_enabled ? 1 : 0
-
-  metadata {
-    namespace = kubernetes_namespace.istio[0].metadata[0].name
-    name      = "tls-domain"
-  }
-
-  data = {
-    "tls.crt" = base64decode(var.domain_crt)
-    "tls.key" = base64decode(var.domain_key)
-  }
-
-  type = "kubernetes.io/tls"
-}
-
 resource "helm_release" "kiali" {
   count = var.istio_enabled ? 1 : 0
 
   depends_on = [
     helm_release.istio_ingress_gateway,
     helm_release.istio_egress_gateway,
-    kubernetes_secret.kiali_domain_tls,
     kubernetes_secret.kiali_basic_auth
   ]
 
@@ -538,6 +567,9 @@ locals {
                 "nginx.ingress.kubernetes.io/backend-protocol"   = "HTTP"
                 "nginx.ingress.kubernetes.io/auth-secret"        = "kiali-basic-auth"
                 "nginx.ingress.kubernetes.io/auth-type"          = "basic"
+                "cert-manager.io/cluster-issuer"                 = kubectl_manifest.cluster_ca_issuer[0].name
+                "cert-manager.io/common-name"                    = local.kiali_domain
+                "cert-manager.io/subject-organization"           = var.domain
               }
             }
             spec = {
@@ -565,8 +597,8 @@ locals {
               ]
               tls = [
                 {
-                  hosts = ["*.${var.domain}"]
-                  secretName = "tls-domain"
+                  hosts = [local.kiali_domain]
+                  secretName = "kiali-tls"
                 }
               ]
             }
