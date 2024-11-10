@@ -2,12 +2,10 @@ locals {
 
   namespaces = {
     # <Namespace name> = [<List of projects>]
-    demo-namespace = ["demo-project"],
-    minio = [
-      "minio-middleware"
-    ],
-    watchtower = [
-      "watchtower-api"
+    archman = [
+      "archman-api",
+      "archman-ui",
+      "archman-agent"
     ]
   }
 

@@ -130,6 +130,16 @@ variable "general_password" {
   sensitive = true
 }
 
+variable "juniper_exporter_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "mikrotik_exporter_password" {
+  type      = string
+  sensitive = true
+}
+
 variable "general_user" {
   type      = string
   sensitive = true

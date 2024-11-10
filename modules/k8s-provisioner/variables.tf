@@ -23,6 +23,14 @@ variable "sonarqube_enabled" { default = false }
 variable "cert_manager_enabled" { default = false }
 variable "external_argocd_enabled" { default = false }
 variable "vault_token_reviewer_enabled" { default = false }
+variable "fortigate_exporter_enabled" { default = false }
+variable "juniper_exporter_enabled" { default = false }
+variable "mikrotik_exporter_enabled" { default = false }
+variable "snmp_exporter_enabled" { default = false }
+variable "vmware_exporter_enabled" { default = false }
+variable "blackbox_exporter_enabled" { default = false }
+variable "reloader_enabled" { default = false }
+
 
 variable "longhorn_version" {}
 variable "harbor_version" {}
@@ -59,6 +67,28 @@ variable "general_user" {
 variable "general_password" {
   sensitive = true
   type      = string
+}
+variable "juniper_exporter_password" {
+  sensitive = true
+  type      = string
+  default   = ""
+}
+variable "mikrotik_exporter_password" {
+  sensitive = true
+  type      = string
+  default   = ""
+}
+variable "vsphere_user" {
+  type      = string
+  sensitive = true
+}
+variable "vsphere_password" {
+  type      = string
+  sensitive = true
+}
+variable "vsphere_server" {
+  type      = string
+  sensitive = true
 }
 variable "harbor_robot_user" {
   sensitive = true

@@ -57,11 +57,16 @@ module "k8s_provisioner_prod" {
 
   vcloud_project_outputs = module.rke2_prod_cluster.production_outputs
 
-  gitlab_gitops_group_token = var.gitlab_gitops_group_token
-  gitlab_runner_token       = var.gitlab_runner_token
-  general_password          = var.general_password
-  general_user              = var.general_user
-  basic_auth_pass           = var.basic_auth_pass
+  gitlab_gitops_group_token  = var.gitlab_gitops_group_token
+  gitlab_runner_token        = var.gitlab_runner_token
+  general_password           = var.general_password
+  general_user               = var.general_user
+  basic_auth_pass            = var.basic_auth_pass
+  juniper_exporter_password  = var.juniper_exporter_password
+  mikrotik_exporter_password = var.mikrotik_exporter_password
+  vsphere_user               = var.username
+  vsphere_password           = var.password
+  vsphere_server             = var.vsphere_server
 
   slack_channel_name         = var.slack_channel_name
   slack_webhook_url          = var.slack_webhook_url
@@ -85,35 +90,44 @@ module "k8s_provisioner_prod" {
   harbor_version           = "1.15.1"
   istio_version            = "1.23.2"
   loki_version             = "6.16.0"
-  longhorn_version         = "1.7.1"
+  longhorn_version         = "1.7.2"
   minio_version            = "14.7.15"
   nfs_provisioner_version  = "4.0.18"
-  prometheus_version       = "25.27.0"
+  prometheus_version       = "25.28.0"
   promtail_version         = "6.16.6"
   rabbitmq_version         = "15.0.2"
   redis_version            = "20.2.0"
   vault_version            = "0.28.1"
   kiali_version            = "1.89.0"
   sonarqube_version        = "10.7.0+3598"
-  argocd_version           = "2.0.2"
+  argocd_version           = "7.7.1"
   cert_manager_version     = "1.16.1"
 
-  external_secrets_enabled     = false
-  gitlab_runner_enabled        = false
-  grafana_enabled              = true
-  harbor_enabled               = false
-  istio_enabled                = true
-  loki_enabled                 = false
-  longhorn_enabled             = true
-  minio_enabled                = false
-  nfs_provisioner_enabled      = false
-  prometheus_enabled           = true
+  external_secrets_enabled = false
+  gitlab_runner_enabled    = false
+  grafana_enabled          = true
+  harbor_enabled           = false
+  istio_enabled            = true
+  loki_enabled             = false
+  longhorn_enabled         = true
+  minio_enabled            = false
+  nfs_provisioner_enabled  = false
+  reloader_enabled         = false
+
+  prometheus_enabled         = true
+  fortigate_exporter_enabled = false
+  juniper_exporter_enabled   = true
+  mikrotik_exporter_enabled  = true
+  snmp_exporter_enabled      = true
+  vmware_exporter_enabled    = true
+  blackbox_exporter_enabled  = true
+
   promtail_enabled             = false
   rabbitmq_enabled             = false
   redis_enabled                = false
   vault_enabled                = false
   sonarqube_enabled            = false
-  argocd_enabled               = false
+  argocd_enabled               = true
   cert_manager_enabled         = true
   vault_token_reviewer_enabled = false
   external_argocd_enabled      = false
@@ -144,8 +158,8 @@ module "k8s_provisioner_prod" {
     "vcsa.hostart.local" = "10.100.70.250"
   }
 
-  projects   = local.projects
-  namespaces = local.namespaces
+  projects           = local.projects
+  namespaces         = local.namespaces
   storage_class_name = "longhorn"
 
   # managed_argocd_environments = module.argocd_provisioner.remote_argocd_environments
@@ -251,17 +265,17 @@ module "rke2_prod_cluster" {
 #   harbor_version           = "1.15.1"
 #   istio_version            = "1.23.2"
 #   loki_version             = "6.16.0"
-#   longhorn_version         = "1.7.1"
+#   longhorn_version         = "1.7.2"
 #   minio_version            = "14.7.15"
 #   nfs_provisioner_version  = "4.0.18"
-#   prometheus_version       = "25.27.0"
+#   prometheus_version       = "25.28.0"
 #   promtail_version         = "6.16.6"
 #   rabbitmq_version         = "15.0.2"
 #   redis_version            = "20.2.0"
 #   vault_version            = "0.28.1"
 #   kiali_version            = "1.89.0"
 #   sonarqube_version        = "10.7.0+3598"
-#   argocd_version           = "2.0.2"
+#   argocd_version           = "7.7.1"
 #
 #   external_secrets_enabled     = true
 #   gitlab_runner_enabled        = false
@@ -389,17 +403,17 @@ module "rke2_prod_cluster" {
 #   harbor_version           = "1.15.1"
 #   istio_version            = "1.23.2"
 #   loki_version             = "6.16.0"
-#   longhorn_version         = "1.7.1"
+#   longhorn_version         = "1.7.2"
 #   minio_version            = "14.7.15"
 #   nfs_provisioner_version  = "4.0.18"
-#   prometheus_version       = "25.27.0"
+#   prometheus_version       = "25.28.0"
 #   promtail_version         = "6.16.6"
 #   rabbitmq_version         = "15.0.2"
 #   redis_version            = "20.2.0"
 #   vault_version            = "0.28.1"
 #   kiali_version            = "1.89.0"
 #   sonarqube_version        = "10.7.0+3598"
-#   argocd_version           = "2.0.2"
+#   argocd_version           = "7.7.1"
 #   cert_manager_version     = "1.16.1"
 #
 #

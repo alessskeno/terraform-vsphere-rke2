@@ -86,24 +86,20 @@ locals {
         enabled          = true
         ingressClassName = "nginx"
         annotations = {
-          "cert-manager.io/cluster-issuer" = kubectl_manifest.cluster_ca_issuer[0].name
-          "cert-manager.io/common-name"          = local.argocd_domain
-          "cert-manager.io/subject-organization" = var.domain
+          "cert-manager.io/cluster-issuer"                 = kubectl_manifest.cluster_ca_issuer[0].name
+          "cert-manager.io/common-name"                    = local.argocd_domain
+          "cert-manager.io/subject-organization"           = var.domain
           "nginx.ingress.kubernetes.io/force-ssl-redirect" = "true"
-          "nginx.ingress.kubernetes.io/backend-protocol" = "HTTP"
+          "nginx.ingress.kubernetes.io/backend-protocol"   = "HTTPS"
         }
-        hosts = [
-          {
-            host = local.argocd_domain
-            paths = ["/"]
-          }
-        ]
-        tls = [
+        hostname = local.argocd_domain
+        extraTls = [
           {
             hosts = [local.argocd_domain]
             secretName = "argocd-tls"
           }
         ]
+
       }
       affinity = {
         nodeAffinity = local.az1_affinity_rule.nodeAffinity

@@ -24,6 +24,7 @@ resource "helm_release" "loki" {
   repository = "https://grafana.github.io/helm-charts"
   chart      = "loki-distributed"
   namespace  = kubernetes_namespace.loki[0].metadata[0].name
+  version    = var.loki_version
 
   values = [
     yamlencode(local.loki_values)
@@ -139,7 +140,7 @@ locals {
         enabled = false
         labels  = local.default_labels
         annotations = {
-          "cert-manager.io/cluster-issuer" = kubectl_manifest.cluster_ca_issuer[0].name
+          "cert-manager.io/cluster-issuer"       = kubectl_manifest.cluster_ca_issuer[0].name
           "cert-manager.io/common-name"          = local.loki_domain
           "cert-manager.io/subject-organization" = var.domain
         }

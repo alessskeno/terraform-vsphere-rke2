@@ -38,7 +38,6 @@ locals {
     "kube-public",
     "kube-node-lease",
     "istio-system",
-    "demo-namespace",
     "argocd",
     "external-secrets",
     "longhorn-system",

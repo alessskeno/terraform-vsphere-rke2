@@ -53,6 +53,7 @@ resource "helm_release" "prometheus" {
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "prometheus"
   namespace  = kubernetes_namespace.prometheus[0].metadata[0].name
+  version    = var.prometheus_version
 
   values = [
     yamlencode(local.prometheus_values)
@@ -63,10 +64,10 @@ locals {
   prometheus_values = {
     server = {
       retentionSize = "7GB"
-      retention      = "30d"
+      retention     = "30d"
       persistentVolume = {
-        enabled = true
-        size    = var.env == "prod" ? "10Gi" : "5Gi"
+        enabled      = true
+        size         = var.env == "prod" ? "10Gi" : "5Gi"
         storageClass = var.storage_class_name
       }
 
@@ -78,8 +79,8 @@ locals {
           "nginx.ingress.kubernetes.io/auth-secret"        = "basic-auth"
           "nginx.ingress.kubernetes.io/auth-type"          = "basic"
           "cert-manager.io/cluster-issuer"                 = kubectl_manifest.cluster_ca_issuer[0].name
-          "cert-manager.io/common-name"          = local.prometheus_domain
-          "cert-manager.io/subject-organization" = var.domain
+          "cert-manager.io/common-name"                    = local.prometheus_domain
+          "cert-manager.io/subject-organization"           = var.domain
         }
         hosts = [local.prometheus_domain]
         tls = [
@@ -91,7 +92,7 @@ locals {
       }
     },
     extraScrapeConfigs = var.env == "prod" ? templatefile("${path.root}/files/configurations/scrape-configs.yaml", {
-      bastion_ip = local.nfs_ip_az1
+      nfs_ip = local.nfs_ip_az1
     }) : ""
     serverFiles = {
       "alerting_rules.yml" = yamldecode(templatefile("${path.root}/files/configurations/alerting-rules.yaml", {

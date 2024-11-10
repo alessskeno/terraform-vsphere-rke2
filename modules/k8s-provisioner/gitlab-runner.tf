@@ -4,7 +4,7 @@
 # https://docs.rke2.io/install/containerd_registry_configuration
 # https://github.com/GoogleContainerTools/kaniko/tree/main
 
-resource "kubernetes_namespace" "gitlab_runners" {
+resource "kubernetes_namespace" "gitlab_runner" {
   count = var.gitlab_runner_enabled ? 1 : 0
   metadata {
     name   = "gitlab-runner"
@@ -24,7 +24,7 @@ resource "kubernetes_limit_range" "gitlab_runner_ns_resource_constraints" {
 
   metadata {
     name      = "gitlab-runner-system-limit-range"
-    namespace = kubernetes_namespace.gitlab_runners[0].metadata[0].name
+    namespace = kubernetes_namespace.gitlab_runner[0].metadata[0].name
     labels    = local.default_labels
   }
 
@@ -38,13 +38,13 @@ resource "kubernetes_limit_range" "gitlab_runner_ns_resource_constraints" {
       }
 
       default = {
-        cpu    = "7"
-        memory = "14Gi"
+        cpu    = "4"
+        memory = "8Gi"
       }
 
       max = {
-        cpu    = "7"
-        memory = "14Gi"
+        cpu    = "8"
+        memory = "8Gi"
       }
 
       min = {
@@ -55,12 +55,12 @@ resource "kubernetes_limit_range" "gitlab_runner_ns_resource_constraints" {
   }
 }
 
-resource "helm_release" "gitlab_runners" {
+resource "helm_release" "gitlab_runner" {
   count      = var.gitlab_runner_enabled ? 1 : 0
   name       = "gitlab-runner"
   repository = "https://charts.gitlab.io"
   chart      = "gitlab-runner"
-  namespace  = kubernetes_namespace.gitlab_runners[0].metadata[0].name
+  namespace  = kubernetes_namespace.gitlab_runner[0].metadata[0].name
   version    = var.gitlab_runner_version
 
   set {
@@ -95,7 +95,7 @@ locals {
         [[runners]]
           [runners.kubernetes]
             namespace = "{{.Release.Namespace}}"
-            image = "gcr.io/kaniko-project/executor:v1.17.0-debug"
+            image = "gcr.io/kaniko-project/executor:debug"
             image_pull_secrets = ["docker-config-harbor"]
             cpu_limit = "1"
             memory_limit = "4Gi"
@@ -135,7 +135,7 @@ resource "kubernetes_secret" "gr_domain_root_crt" {
   count = var.gitlab_runner_enabled ? 1 : 0
   metadata {
     name      = "domain-root-crt"
-    namespace = kubernetes_namespace.gitlab_runners[0].metadata[0].name
+    namespace = kubernetes_namespace.gitlab_runner[0].metadata[0].name
   }
 
   data = {
@@ -146,7 +146,7 @@ resource "kubernetes_secret" "gr_domain_root_crt" {
 resource "kubernetes_secret" "gr_domain_crt" {
   count = var.gitlab_runner_enabled ? 1 : 0
   metadata {
-    namespace = kubernetes_namespace.gitlab_runners[0].metadata[0].name
+    namespace = kubernetes_namespace.gitlab_runner[0].metadata[0].name
     name      = "domain-crt"
   }
 
@@ -159,7 +159,7 @@ resource "kubernetes_secret" "gr_image_pull_secret_harbor" {
   count = var.gitlab_runner_enabled ? 1 : 0
   metadata {
     name      = "docker-config-harbor"
-    namespace = kubernetes_namespace.gitlab_runners[0].metadata[0].name
+    namespace = kubernetes_namespace.gitlab_runner[0].metadata[0].name
   }
 
   data = {
@@ -183,7 +183,7 @@ Append similar pattern to gitlab-runner.config.runners.config local:
         [[runners]]
           [runners.kubernetes]
             namespace = "{{.Release.Namespace}}"
-            image = "gcr.io/kaniko-project/executor:v1.17.0-debug"
+            image = "gcr.io/kaniko-project/executor:debug"
             [[runners.kubernetes.host_aliases]]
               ip = "10.0.211.20"
               hostnames = ["harbor.azintelecom.az"]
@@ -201,10 +201,10 @@ Append similar pattern to gitlab-runner.config.runners.config local:
 Create respective secret:
 
 resource "kubernetes_secret" "docker_config_harbor" {
-  count      = var.gitlab_runners && var.harbor ? 1 : 0
+  count      = var.gitlab_runner && var.harbor ? 1 : 0
   metadata {
     name = "docker-config-harbor"
-    namespace = kubernetes_namespace.gitlab_runners[0].metadata[0].name
+    namespace = kubernetes_namespace.gitlab_runner[0].metadata[0].name
   }
 
   data = {
