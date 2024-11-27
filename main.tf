@@ -1,31 +1,31 @@
 # Pre-requisites: python3.x, ansible, ansible-core, sshpass, whois(mkpasswd)
 
 # Production Cluster
-# module "vault_provisioner" {
-#   # depends_on = [module.k8s_provisioner_prod]
-#   count      = module.k8s_provisioner_prod.vault_provisioner ? 1 : 0
-#   source     = "./modules/vault-provisioner"
-#   env        = "prod"
-#   namespaces = local.namespaces
-#   projects   = local.projects
-#   vault_authorized_environments = {
-#     # dev = {
-#     #   host                   = cidrhost(var.vm_cidr_az1, 210)
-#     #   reviewer_token         = module.k8s_provisioner_dev.vault_token_reviewer_bearer_token
-#     #   cluster_ca_certificate = base64decode(var.cluster_ca_cert_dev)
-#     # },
-#     #     stage = {
-#     #       host           = cidrhost(var.vm_cidr_az1, 110)
-#     #       reviewer_token = module.k8s_provisioner_stage.vault_token_reviewer_bearer_token
-#     #       cluster_ca_certificate = base64decode(var.cluster_ca_cert_stage)
-#     #     },
-#     prod = {
-#       host                   = cidrhost(var.vm_cidr_az1, 10)
-#       reviewer_token         = module.k8s_provisioner_prod.vault_token_reviewer_bearer_token
-#       cluster_ca_certificate = base64decode(var.cluster_ca_cert_prod)
-#     }
-#   }
-# }
+module "vault_provisioner" {
+  # depends_on = [module.k8s_provisioner_prod]
+  count      = module.k8s_provisioner_prod.vault_provisioner ? 1 : 0
+  source     = "./modules/vault-provisioner"
+  env        = "prod"
+  namespaces = local.namespaces
+  projects   = local.projects
+  vault_authorized_environments = {
+    # dev = {
+    #   host                   = cidrhost(var.vm_cidr_az1, 210)
+    #   reviewer_token         = module.k8s_provisioner_dev.vault_token_reviewer_bearer_token
+    #   cluster_ca_certificate = base64decode(var.cluster_ca_cert_dev)
+    # },
+    #     stage = {
+    #       host           = cidrhost(var.vm_cidr_az1, 110)
+    #       reviewer_token = module.k8s_provisioner_stage.vault_token_reviewer_bearer_token
+    #       cluster_ca_certificate = base64decode(var.cluster_ca_cert_stage)
+    #     },
+    prod = {
+      host = cidrhost(var.vm_cidr_az1, 10)
+      reviewer_token = module.k8s_provisioner_prod.vault_token_reviewer_bearer_token
+      cluster_ca_certificate = base64decode(var.cluster_ca_cert_prod)
+    }
+  }
+}
 
 # module "argocd_provisioner" {
 #   source = "./modules/argocd-provisioner"
@@ -125,11 +125,12 @@ module "k8s_provisioner_prod" {
   promtail_enabled             = false
   rabbitmq_enabled             = false
   redis_enabled                = false
-  vault_enabled                = false
+  vault_enabled                = true
+  vault_token_reviewer_enabled = true
+  vault_provisioner            = true
   sonarqube_enabled            = false
   argocd_enabled               = true
   cert_manager_enabled         = true
-  vault_token_reviewer_enabled = false
   external_argocd_enabled      = false
 
   providers = {

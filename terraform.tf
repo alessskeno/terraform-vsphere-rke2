@@ -64,7 +64,6 @@ provider "vault" {
   address         = "https://${module.rke2_prod_cluster.production_outputs.vault_domain}"
   skip_tls_verify = true
   token           = var.vault_admin_token
-  alias           = "prod"
 }
 
 # CENTRALIZED ARGOCD ON PRODUCTION

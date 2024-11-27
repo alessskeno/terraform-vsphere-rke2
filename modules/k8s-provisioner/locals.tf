@@ -75,6 +75,7 @@ locals {
     "kubernetes.io/owner"       = "Devops"
     "kubernetes.io/managed-by"  = "Terraform"
   }
+  cluster_issuer_name = "cluster-ca-issuer"
 
   custom_dns_enabled = var.external_dns_entries != {} || var.internal_dns_entries != {}
   multi_az           = var.vcloud_project_outputs.multi_az

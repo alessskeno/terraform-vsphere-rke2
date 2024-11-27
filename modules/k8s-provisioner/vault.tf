@@ -31,39 +31,69 @@ resource "kubernetes_namespace" "vault" {
 # We are using Opaque type of secrets instead of TLS - not to specify a tls certificate as file during creation
 # we are using base64 encoded values and base64 decode function instead.
 # We are using the same certificates for listener and RAFT, these can be separate.
-resource "kubernetes_secret" "vault_root_crt" {
+# resource "kubernetes_secret" "vault_root_crt" {
+#   count = var.vault_enabled ? 1 : 0
+#   metadata {
+#     name      = "tls-ca"
+#     namespace = kubernetes_namespace.vault[0].metadata[0].name
+#   }
+#
+#   data = {
+#     "ca.crt" = base64decode(var.vault_root_crt)
+#     # root ca for the raft endpoints to trust - We are using the same for both
+#     "client-auth-ca.pem" = base64decode(var.vault_root_crt)
+#     # root ca for the clients to trust - it has to be with pem extension
+#   }
+# }
+#
+# resource "kubernetes_secret" "vault_crt_key_chain" {
+#   count = var.vault_enabled ? 1 : 0
+#   metadata {
+#     namespace = kubernetes_namespace.vault[0].metadata[0].name
+#     name      = "tls-server"
+#   }
+#
+#   data = {
+#     "fullchain.pem" = base64decode(var.vault_crt)
+#     "server.crt" = base64decode(var.vault_crt)
+#     "server.key" = base64decode(var.vault_key)
+#   }
+# }
+
+resource "kubectl_manifest" "vault_certificate" {
+  depends_on = [kubectl_manifest.cluster_ca_issuer]
   count = var.vault_enabled ? 1 : 0
-  metadata {
-    name      = "tls-ca"
-    namespace = kubernetes_namespace.vault[0].metadata[0].name
-  }
 
-  data = {
-    "ca.crt" = base64decode(var.vault_root_crt)
-    # root ca for the raft endpoints to trust - We are using the same for both
-    "client-auth-ca.pem" = base64decode(var.vault_root_crt)
-    # root ca for the clients to trust - it has to be with pem extension
-  }
-}
-
-resource "kubernetes_secret" "vault_crt_key_chain" {
-  count = var.vault_enabled ? 1 : 0
-  metadata {
-    namespace = kubernetes_namespace.vault[0].metadata[0].name
-    name      = "tls-server"
-  }
-
-  data = {
-    "fullchain.pem" = base64decode(var.vault_crt)
-    "server.crt" = base64decode(var.vault_crt)
-    "server.key" = base64decode(var.vault_key)
-  }
+  yaml_body = yamlencode({
+    apiVersion = "cert-manager.io/v1",
+    kind       = "Certificate",
+    metadata = {
+      name      = "vault-tls",
+      namespace = kubernetes_namespace.vault[0].metadata[0].name,
+    },
+    spec = {
+      secretName = "vault-tls", # This is generated secret Vault will use
+      issuerRef = {
+        name = local.cluster_issuer_name,
+        kind = "ClusterIssuer",
+      },
+      dnsNames = [
+        "vault-0.vault-internal",
+        "vault-1.vault-internal",
+        # "vault-2.vault-internal"
+      ],
+      ipAddresses = [
+        "127.0.0.1"
+      ]
+    }
+  })
 }
 
 resource "helm_release" "vault" {
   depends_on = [
-    kubernetes_secret.vault_root_crt,
-    kubernetes_secret.vault_crt_key_chain,
+    # kubernetes_secret.vault_root_crt,
+    # kubernetes_secret.vault_crt_key_chain,
+    kubectl_manifest.vault_certificate
   ]
 
   count      = var.vault_enabled ? 1 : 0
@@ -177,19 +207,20 @@ locals {
         initialDelaySeconds = 600 # 5 minutes to initialize and unseal all vault server pods
       }
       extraEnvironmentVars = {
-        VAULT_CACERT = "/vault/userconfig/tls-ca/ca.crt"
+        VAULT_CACERT = "/vault/userconfig/vault-tls/ca.crt"
       }
       extraVolumes = [
         # default mount path is "/vault/userconfig/<secretname>/<data-key>"
-        { type = "secret", name = "tls-server" }, # domain server crt and key holder secret
-        { type = "secret", name = "tls-ca" }      # custom root cert secret
+        # { type = "secret", name = "tls-server" }, # domain server crt and key holder secret
+        # { type = "secret", name = "tls-ca" }      # custom root cert secret
+        { type = "secret", name = "vault-tls" }      # generated cert secret
       ]
       standalone = {
         enabled = false
       }
       ha = {
         enabled  = true
-        replicas = 3
+        replicas = 2
         raft = {
           enabled   = true
           setNodeId = true
@@ -199,29 +230,23 @@ locals {
             listener "tcp" {
               address = "[::]:8200"
               cluster_address = "[::]:8201"
-              tls_cert_file = "/vault/userconfig/tls-server/fullchain.pem"
-              tls_key_file = "/vault/userconfig/tls-server/server.key"
-              tls_client_ca_file = "/vault/userconfig/tls-ca/client-auth-ca.pem"
+              tls_cert_file = "/vault/userconfig/vault-tls/tls.crt"
+              tls_key_file = "/vault/userconfig/vault-tls/tls.key"
+              tls_client_ca_file = "/vault/userconfig/vault-tls/ca.crt"
             }
             storage "raft" {
               path = "/vault/data"
               retry_join {
                 leader_api_addr = "https://vault-0.vault-internal:8200"
-                leader_ca_cert_file = "/vault/userconfig/tls-ca/ca.crt"
-                leader_client_cert_file = "/vault/userconfig/tls-server/server.crt"
-                leader_client_key_file = "/vault/userconfig/tls-server/server.key"
+                leader_ca_cert_file = "/vault/userconfig/vault-tls/ca.crt"
+                leader_client_cert_file = "/vault/userconfig/vault-tls/tls.crt"
+                leader_client_key_file = "/vault/userconfig/vault-tls/tls.key"
               }
               retry_join {
                 leader_api_addr = "https://vault-1.vault-internal:8200"
-                leader_ca_cert_file = "/vault/userconfig/tls-ca/ca.crt"
-                leader_client_cert_file = "/vault/userconfig/tls-server/server.crt"
-                leader_client_key_file = "/vault/userconfig/tls-server/server.key"
-              }
-              retry_join {
-                leader_api_addr = "https://vault-2.vault-internal:8200"
-                leader_ca_cert_file = "/vault/userconfig/tls-ca/ca.crt"
-                leader_client_cert_file = "/vault/userconfig/tls-server/server.crt"
-                leader_client_key_file = "/vault/userconfig/tls-server/server.key"
+                leader_ca_cert_file = "/vault/userconfig/vault-tls/ca.crt"
+                leader_client_cert_file = "/vault/userconfig/vault-tls/tls.crt"
+                leader_client_key_file = "/vault/userconfig/vault-tls/tls.key"
               }
             }
             service_registration "kubernetes" {}
