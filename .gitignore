@@ -82,3 +82,5 @@ values.hcl
 # Openvpn certificates
 *.ovpn
 **/*.ovpn
+
+./files/kubeconfig/*

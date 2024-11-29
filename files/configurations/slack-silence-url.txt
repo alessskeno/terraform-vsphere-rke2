@@ -1,1 +1,0 @@
-{{ template "__alert_silence_link" . }}
