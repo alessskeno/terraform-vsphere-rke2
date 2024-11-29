@@ -30,7 +30,7 @@ hashed_pass      = "<hashed_password>" # Hashed password. usage: mkpasswd -m sha
 general_password          = "<password>" # General password
 general_user              = "<username>" # General username
 
-domain          = "hostart.az"
+domain          = "<domain>" # Domain name
 domain_crt      = "<base64_encoded_crt>"
 domain_key      = "<base64_encoded_key>"
 domain_root_crt = "<base64_encoded_root_crt>"
