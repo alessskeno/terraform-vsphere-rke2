@@ -16,6 +16,7 @@
 **/.ova
 
 # .tfstate files
+*.tfstate
 *.tfstate.*
 **/.tfstate.*
 
