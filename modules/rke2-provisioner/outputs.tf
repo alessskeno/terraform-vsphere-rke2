@@ -2,18 +2,8 @@ output "production_outputs" {
   value = {
     domain              = var.domain
     multi_az            = var.multi_az
-    argocd_domain       = local.argocd_domain
-    longhorn_domain     = local.longhorn_domain
     harbor_domain       = local.harbor_domain
-    vault_domain        = local.vault_domain
-    prometheus_domain   = local.prometheus_domain
-    grafana_domain      = local.grafana_domain
-    loki_domain         = local.loki_domain
-    alertmanager_domain = local.alertmanager_domain
-    kiali_domain        = local.kiali_domain
-    minio_domain        = local.minio_domain
-    rabbitmq_domain     = local.rabbitmq_domain
-    sonarqube_domain    = local.sonarqube_domain
+
     master_node_names = {
       az1 = vsphere_virtual_machine.master_nodes_az1[*].name
       az3 = var.multi_az ? vsphere_virtual_machine.master_nodes_az3[*].name : []
@@ -33,18 +23,8 @@ output "development_outputs" {
   value = {
     domain              = var.domain
     multi_az            = var.multi_az
-    argocd_domain       = local.argocd_domain
-    longhorn_domain     = local.longhorn_domain
     harbor_domain       = local.harbor_domain
-    vault_domain        = local.vault_domain
-    prometheus_domain   = local.prometheus_domain
-    grafana_domain      = local.grafana_domain
-    loki_domain         = local.loki_domain
-    alertmanager_domain = local.alertmanager_domain
-    kiali_domain        = local.kiali_domain
-    minio_domain        = local.minio_domain
-    sonarqube_domain    = local.sonarqube_domain
-    rabbitmq_domain     = local.rabbitmq_domain
+
     master_node_names = {
       az1 = vsphere_virtual_machine.master_nodes_az1[*].name
       az3 = var.multi_az ? vsphere_virtual_machine.master_nodes_az3[*].name : []
@@ -64,18 +44,8 @@ output "staging_outputs" {
   value = {
     domain              = var.domain
     multi_az            = var.multi_az
-    argocd_domain       = local.argocd_domain
-    longhorn_domain     = local.longhorn_domain
     harbor_domain       = local.harbor_domain
-    vault_domain        = local.vault_domain
-    prometheus_domain   = local.prometheus_domain
-    grafana_domain      = local.grafana_domain
-    alertmanager_domain = local.alertmanager_domain
-    kiali_domain        = local.kiali_domain
-    minio_domain        = local.minio_domain
-    loki_domain         = local.loki_domain
-    rabbitmq_domain     = local.rabbitmq_domain
-    sonarqube_domain    = local.sonarqube_domain
+
     master_node_names = {
       az1 = vsphere_virtual_machine.master_nodes_az1[*].name
       az3 = var.multi_az ? vsphere_virtual_machine.master_nodes_az3[*].name : []

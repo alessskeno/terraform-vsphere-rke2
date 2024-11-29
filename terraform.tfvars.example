@@ -1,0 +1,53 @@
+username = "<username>" # vCenter username
+password = "<password>" # vCenter password
+
+vsphere_server = "<FQDN or IP Address>" # vCenter server
+
+### AZ1
+vsphere_datacenter_az1    = "<datacenter_name>" # Datacenter name
+vsphere_host_az1          = "<host_ip>" # Host IP
+vsphere_resource_pool_az1 = "<resource_pool_name>" # Resource pool name
+vsphere_datastore_az1     = "<datastore_name>" # Datastore name
+vsphere_network_name_az1  = "<network_name>" # Network name
+vm_cidr_az1               = "<cidr>" # VMs CIDR
+vm_gw_ip_az1 = "<gateway_ip>" # Gateway IP
+
+### AZ3
+vsphere_datacenter_az3    = "<datacenter_name>" # Datacenter name
+vsphere_host_az3          = "<host_ip>" # Host IP
+vsphere_resource_pool_az3 = "<resource_pool_name>" # Resource pool name
+vsphere_datastore_az3     = "<datastore_name>" # Datastore name
+vsphere_network_name_az3  = "<network_name>" # Network name
+vm_cidr_az3               = "<cidr>" # VMs CIDR
+vm_gw_ip_az3 = "<gateway_ip>" # Gateway IP
+
+#===========================#
+
+ansible_password = "<password>" # Ansible password
+rke2_token       = "<token>" # RKE2 token. If you do not specify a pre-shared secret, RKE2 will generate one and place it at /var/lib/rancher/rke2/server/node-token.
+hashed_pass      = "<hashed_password>" # Hashed password. usage: mkpasswd -m sha-512 <password>
+
+general_password          = "<password>" # General password
+general_user              = "<username>" # General username
+
+domain          = "hostart.az"
+domain_crt      = "<base64_encoded_crt>"
+domain_key      = "<base64_encoded_key>"
+domain_root_crt = "<base64_encoded_root_crt>"
+
+/*
+Initialization:
+
+export GITLAB_ACCESS_TOKEN=<ACCESS_TOKEN>
+terraform init \
+    -backend-config="address=https://<gitlab_url>/api/v4/projects/<project_id>/terraform/state/tfstate" \
+    -backend-config="lock_address=https://<gitlab_url>/api/v4/projects/<project_id>/terraform/state/tfstate/lock" \
+    -backend-config="unlock_address=https://<gitlab_url>/api/v4/projects/<project_id>/terraform/state/tfstate/lock" \
+    -backend-config="username=<gitlab_user>" \
+    -backend-config="password=$GITLAB_ACCESS_TOKEN" \
+    -backend-config="lock_method=POST" \
+    -backend-config="unlock_method=DELETE" \
+    -backend-config="retry_wait_min=5"
+
+
+*/

@@ -20,16 +20,4 @@ locals {
 
   harbor_host         = var.env == "prod" ? "127.0.1.1" : var.prod_rke2_api_endpoint
   harbor_domain       = var.env == "prod" ? "harbor.${var.domain}" : "harbor-${var.env}.${var.domain}"
-  argocd_domain       = var.env == "prod" ? "argocd.${var.domain}" : "argocd-${var.env}.${var.domain}"
-  longhorn_domain     = var.env == "prod" ? "longhorn.${var.domain}" : "longhorn-${var.env}.${var.domain}"
-  vault_domain        = var.env == "prod" ? "vault.${var.domain}" : "vault-${var.env}.${var.domain}"
-  grafana_domain      = var.env == "prod" ? "grafana.${var.domain}" : "grafana-${var.env}.${var.domain}"
-  prometheus_domain   = var.env == "prod" ? "prometheus.${var.domain}" : "prometheus-${var.env}.${var.domain}"
-  alertmanager_domain = var.env == "prod" ? "alertmanager.${var.domain}" : "alertmanager-${var.env}.${var.domain}"
-  kiali_domain        = var.env == "prod" ? "kiali.${var.domain}" : "kiali-${var.env}.${var.domain}"
-  minio_domain        = var.env == "prod" ? "minio.${var.domain}" : "minio-${var.env}.${var.domain}"
-  rabbitmq_domain     = var.env == "prod" ? "rabbitmq.${var.domain}" : "rabbitmq-${var.env}.${var.domain}"
-  sonarqube_domain    = var.env == "prod" ? "sonar.${var.domain}" : "sonar-${var.env}.${var.domain}"
-  loki_domain         = var.env == "prod" ? "loki.${var.domain}" : "loki-${var.env}.${var.domain}"
-
 }
